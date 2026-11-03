@@ -185,6 +185,7 @@ textarea:focus { outline: none; border-color: var(--ink); }
 .mode-roast strong { color: var(--red); }
 .mode-quiet strong { color: #4f6b5c; }
 .mode-courage strong { color: #a5741e; }
+.mode-rap strong { color: #5a3d8a; }
 
 /* ---------- 回應 ---------- */
 .case-tag {

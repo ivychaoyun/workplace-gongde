@@ -13,7 +13,7 @@
 ## 技術
 
 - 純 HTML / CSS / 原生 JavaScript，**沒有框架、沒有建置工具、沒有 npm**。不要引入 React、Tailwind、打包工具或套件，除非組員明確要求。
-- 腳本用一般 `<script>` 依序載入（`content.js` → `modes.js` → `app.js`），共用全域變數，不是 ES module。
+- 腳本用一般 `<script>` 依序載入（`content.js` → `modes.js` → `rap.js` → `app.js`），共用全域變數，不是 ES module。
 - 字型從 Google Fonts 載入，其他資源都在本地。
 - 使用者輸入的抱怨只在瀏覽器中使用，**不可送到任何伺服器、不可存進 localStorage**。
 
@@ -31,19 +31,23 @@ python3 -m http.server 5173   # 在專案根目錄執行，然後打開 http://l
 | --- | --- | --- |
 | `index.html` | 五個步驟畫面（`#step-deposit`、`#step-mode`、`#step-response`、`#step-merits`、`#step-slip`） | 共用 |
 | `js/app.js` | 狀態、步驟切換、渲染 | 共用 |
-| `js/content.js` | 所有文案：`SCENARIOS`、`FALLBACK_SCENARIO`、`MODES`、`MERITS` | `feature/dark-humor` |
+| `js/content.js` | 所有文案：`SCENARIOS`、`FALLBACK_SCENARIO`、`MODES`、`MERITS` | `feature/memes-humor` |
+| `assets/memes/<情境id>.png` | 梗圖，缺檔會自動顯示佔位框 | `feature/memes-humor` |
 | `js/modes.js` | `applyModeEffect(modeId)`：各陪伴模式的特效 | `feature/mode-experience` |
 | `css/modes.css` | 依 `body[data-mode="roast|quiet|courage"]` 切換樣式 | `feature/mode-experience` |
+| `js/rap.js` | 饒舌模式：`RAP_VERSES`（每情境一段歌詞）、`getRapVerse()`、`startRap()` | `feature/rap-mode` |
+| `css/rap.css` | `body[data-mode="rap"]` 的樣式 | `feature/rap-mode` |
+| `assets/music/rap.mp3` | 饒舌伴奏 | `feature/rap-mode` |
 | `css/style.css` | 全站樣式與色彩變數（`:root`） | `feature/music-visual` |
-| `assets/memes/<情境id>.png` | 梗圖，缺檔會自動顯示佔位框 | `feature/memes` |
-| `assets/music/<模式id>.mp3` | 音樂，缺檔會自動顯示佔位框 | `feature/music-visual` |
+| `assets/music/<模式id>.mp3` | 其他模式的音樂，缺檔會自動顯示佔位框 | `feature/music-visual` |
 
 分工細節見 [docs/分工.md](docs/分工.md)。
 
 ## 修改規則
 
 - **只改目前分支負責的檔案。** 需要動 `index.html` 或 `js/app.js` 時，改動要小，並在回覆中明確告知使用者，因為其他組員也會改。
-- 情境的 `id` 同時是梗圖檔名，模式的 `id` 同時是音樂檔名與 `data-mode` 值；改 id 要一起改對應檔名。
+- 情境的 `id` 同時是梗圖檔名與 `RAP_VERSES` 的 key，模式的 `id` 同時是音樂檔名與 `data-mode` 值；改 id 要一起改對應的地方。
+- 陪伴模式有四種：`roast`、`quiet`、`courage` 的文字在 `content.js` 的情境欄位；`rap` 的歌詞在 `rap.js`。
 - 新增文案放在 `content.js`，不要把文字寫死在 `app.js` 或 HTML。
 - 沿用現有風格：2 空格縮排、雙引號、`const`、少量中文註解、CSS 使用 `:root` 的色彩變數。
 - 介面文字一律用**繁體中文（台灣用語）**。

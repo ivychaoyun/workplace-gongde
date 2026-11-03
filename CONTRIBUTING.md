@@ -36,7 +36,7 @@ git push -u origin feature/你負責的分支
 四個組員各負責一個分支，詳細待辦見 [docs/分工.md](docs/分工.md)。
 
 ```bash
-git checkout feature/dark-humor   # 換成你負責的分支
+git checkout feature/memes-humor  # 換成你負責的分支
 git pull origin main              # 開工前先拿 main 的最新版本
 ```
 

@@ -70,6 +70,7 @@ const MODES = [
   { id: "roast", label: "陪我吐槽", desc: "幫你把話說出口" },
   { id: "quiet", label: "讓我靜靜", desc: "不說教，陪你待一下" },
   { id: "courage", label: "給我勇氣", desc: "給一句可以開口的話" },
+  { id: "rap", label: "幫我饒舌", desc: "把怨氣押成韻，唱出來" }, // 歌詞在 rap.js
 ];
 
 // 今日功德：照顧自己與守住界線，也算功德

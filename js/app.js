@@ -69,7 +69,8 @@ function currentScenario() {
 function renderResponse() {
   const sc = currentScenario();
   $("#case-tag").textContent = `${sc.label}・${state.mode.label}`;
-  $("#response-text").textContent = sc[state.mode.id];
+  $("#response-text").textContent =
+    state.mode.id === "rap" ? getRapVerse(sc.id) : sc[state.mode.id];
 
   const memePath = `assets/memes/${sc.id}.png`;
   const img = $("#meme-img");

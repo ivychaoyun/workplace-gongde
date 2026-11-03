@@ -13,7 +13,7 @@
 寄放抱怨 → 選擇陪伴模式 → 查看嘴替與梗圖 → 聆聽音樂 → 領取今日功德單
 
 - 五類情境：猜主管想法、反覆改稿、臨時加單、救火接手、休假被找（也可自由輸入）
-- 三種陪伴模式：陪我吐槽／讓我靜靜／給我勇氣
+- 四種陪伴模式：陪我吐槽／讓我靜靜／給我勇氣／幫我饒舌
 - 功德單可列印或另存 PDF
 - 輸入的抱怨只在瀏覽器裡使用，不會上傳或儲存
 
@@ -34,9 +34,11 @@ workplace-gongde/
 ├── js/content.js       # 所有文案：情境、嘴替、判詞、迴向、功德項目  ← 改文案改這裡
 ├── css/modes.css       # 三種陪伴模式的樣式
 ├── js/modes.js         # 三種陪伴模式的特效
+├── js/rap.js           # 饒舌模式的歌詞與效果
+├── css/rap.css         # 饒舌模式的樣式
 ├── js/app.js           # 互動邏輯
 ├── assets/memes/       # 梗圖，檔名對應情境 id（例：guess.png）
-├── assets/music/       # 音樂，檔名對應模式 id（roast.mp3 / quiet.mp3 / courage.mp3）
+├── assets/music/       # 音樂，檔名對應模式 id（roast / quiet / courage / rap .mp3）
 └── docs/
     └── design-thinking.md   # 設計思考紀錄
 ```
@@ -46,7 +48,7 @@ workplace-gongde/
 | 類型 | 位置 | 檔名 |
 | --- | --- | --- |
 | 梗圖 | `assets/memes/` | `guess.png`、`revise.png`、`rush.png`、`firefight.png`、`leave.png`、`other.png` |
-| 音樂 | `assets/music/` | `roast.mp3`、`quiet.mp3`、`courage.mp3` |
+| 音樂 | `assets/music/` | `roast.mp3`、`quiet.mp3`、`courage.mp3`、`rap.mp3` |
 
 檔案放進去就會自動顯示；還沒放的會顯示「待補」的佔位框。請只使用有授權或自己製作的素材。
 
