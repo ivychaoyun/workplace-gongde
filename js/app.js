@@ -1,4 +1,4 @@
-// 流程控制：寄放 → 專輯 → 木魚 → 功德圓滿。
+// 流程控制，由 feature/flow-test（D 統整）負責：寄放 → 專輯 → 木魚 → 功德圓滿。
 // 文案在 content.js，歌在 rap.js，封面在 album.js，木魚與分享在 merit.js。
 
 const state = {

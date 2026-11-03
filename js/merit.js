@@ -1,4 +1,4 @@
-// 敲木魚、功德圓滿與社群分享，由 feature/merit-share 負責。
+// 敲木魚、功德圓滿與社群分享，由 feature/visual-share 負責。
 
 const FISH_GOAL = 10; // 敲幾下功德圓滿
 let fishCount = 0;

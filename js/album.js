@@ -1,4 +1,4 @@
-// 抱怨專輯封面，由 feature/album 負責。
+// 抱怨專輯封面，由 feature/visual-share 負責。
 // drawCover 會把梗圖、專輯名（判詞）、廠牌與日期畫到 1:1 的 canvas 上。
 // 注意：用 file:// 直接開網頁時，畫了梗圖的 canvas 無法匯出圖片，請用 Live Server 或本機伺服器。
 

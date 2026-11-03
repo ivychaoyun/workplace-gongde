@@ -32,24 +32,24 @@ python3 -m http.server 5173   # 在專案根目錄執行，然後打開 http://l
 
 | 檔案 | 用途 | 負責分支 |
 | --- | --- | --- |
-| `index.html` | 四個步驟畫面 | 共用 |
-| `js/app.js` | 狀態、步驟切換、串接各模組 | 共用 |
-| `css/style.css` | 全站樣式與色彩變數（`:root`），依區塊註解分工 | 共用 |
+| `index.html` | 四個步驟畫面 | `feature/flow-test`（D 統整） |
+| `js/app.js` | 狀態、步驟切換、串接各模組 | `feature/flow-test`（D 統整） |
+| `css/style.css` | 全站樣式與色彩變數（`:root`） | `feature/visual-share` |
 | `js/content.js` | 文案：`SCENARIOS`（`roast` 嘴替、`verdict` 判詞＝專輯名、`blessing` 迴向）、`FALLBACK_SCENARIO`、`MERITS` | `feature/memes-humor` |
 | `assets/memes/<情境id>.png` | 梗圖，當專輯封面背景；缺檔會改用漸層 | `feature/memes-humor` |
 | `js/rap.js` | `RAP_VERSES`（每情境一段歌詞）、`getRapVerse()`、`getSongPath()`、`startRap()` | `feature/rap-mode` |
 | `css/rap.css` | 歌詞樣式 | `feature/rap-mode` |
 | `assets/music/album/<情境id>.mp3` | 30 秒主打歌；缺檔會顯示佔位框 | `feature/rap-mode` |
-| `js/album.js` | `drawCover(canvas, scenario)`、`wrapText()`、`COVER_COLORS` | `feature/album` |
-| `js/merit.js` | 木魚（`FISH_GOAL`、`hitFish()`）、`drawShareCard()`、`shareCard()`、`downloadCard()` | `feature/merit-share` |
+| `js/album.js` | `drawCover(canvas, scenario)`、`wrapText()`、`COVER_COLORS` | `feature/visual-share` |
+| `js/merit.js` | 木魚（`FISH_GOAL`、`hitFish()`）、`drawShareCard()`、`shareCard()`、`downloadCard()` | `feature/visual-share` |
 
 分工細節見 [docs/分工.md](docs/分工.md)。
 
 ## 修改規則
 
-- **只改目前分支負責的檔案。** 需要動 `index.html`、`js/app.js` 或 `css/style.css` 時，改動要小，並在回覆中明確告知使用者，因為其他組員也會改。
+- **只改目前分支負責的檔案。** 需要動別人負責的檔案（特別是 `index.html`、`js/app.js`）時，改動要小，並在回覆中明確告知使用者，請他先跟負責人（D 統整）協調。
 - 情境的 `id` 同時是梗圖檔名、主打歌檔名與 `RAP_VERSES` 的 key；改 id 要一起改對應的地方。
-- `merit.js` 的分享圖會呼叫 `album.js` 的 `drawCover()`，改 `drawCover` 的參數要通知 merit-share。
+- `merit.js` 的分享圖會呼叫 `album.js` 的 `drawCover()`，兩者都屬 `feature/visual-share`。
 - 新增文案放在 `content.js`，不要把文字寫死在 `app.js` 或 HTML。
 - 沿用現有風格：2 空格縮排、雙引號、`const`、少量中文註解、CSS 使用 `:root` 的色彩變數。
 - 介面文字一律用**繁體中文（台灣用語）**。
@@ -64,6 +64,6 @@ python3 -m http.server 5173   # 在專案根目錄執行，然後打開 http://l
 
 ## Git
 
-- `main` 是可展示的穩定版；工作在 `feature/*` 分支進行，透過 Pull Request 合併。
+- `main` 是可展示的穩定版，由 D（統整與測試）負責合併；工作在 `feature/*` 分支進行，透過 Pull Request 合併。開 PR 前先把最新的 `main` 合進自己的分支。
 - commit 訊息用繁體中文，簡短描述做了什麼，例如「新增休假被找的三句嘴替」。
 - 不要直接 push 到 `main`，不要 force push，不要改寫別人的提交。
