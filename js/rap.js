@@ -52,7 +52,7 @@ function getSongPath(scenarioId) {
 
 // ---------- AI 現編歌詞 ----------
 // 部署後的服務網址；空字串代表不用 AI，直接唱預設歌詞
-const RAP_API_URL = "";
+const RAP_API_URL = "https://workplace-gongde-rap.lisashe56.workers.dev/rap";
 
 async function fetchRapLines(scenario, complaint) {
   const fallback = { lines: RAP_VERSES[scenario.id] || RAP_VERSES.other, ai: false };
