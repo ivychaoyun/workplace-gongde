@@ -1,5 +1,6 @@
-// 「幫我饒舌」模式，由 feature/rap-mode 負責。
-// 每個情境一段歌詞，key 對應 content.js 的情境 id；伴奏放 assets/music/rap.mp3
+// 抱怨專輯的歌，由 feature/rap-mode 負責。
+// 每個情境一段歌詞，key 對應 content.js 的情境 id；
+// 30 秒主打歌放 assets/music/album/<情境id>.mp3
 
 const RAP_VERSES = {
   guess: [
@@ -44,5 +45,9 @@ function getRapVerse(scenarioId) {
   return (RAP_VERSES[scenarioId] || RAP_VERSES.other).join("\n");
 }
 
-// TODO：歌詞逐行跟著節拍出現、加入使用者輸入的關鍵字、錄音或跟唱
+function getSongPath(scenarioId) {
+  return `assets/music/album/${scenarioId}.mp3`;
+}
+
+// TODO：歌詞跟著節拍逐行出現；用語音朗讀把使用者的關鍵字念在 beat 上，錄成自己的版本
 function startRap() {}

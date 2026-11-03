@@ -10,11 +10,11 @@
 
 ## 體驗流程
 
-寄放抱怨 → 選擇陪伴模式 → 查看嘴替與梗圖 → 聆聽音樂 → 領取今日功德單
+寄放抱怨 → 抱怨專輯（饒舌主打歌＋封面）→ 敲木魚 → 功德圓滿，分享到社群
 
 - 五類情境：猜主管想法、反覆改稿、臨時加單、救火接手、休假被找（也可自由輸入）
-- 四種陪伴模式：陪我吐槽／讓我靜靜／給我勇氣／幫我饒舌
-- 功德單可列印或另存 PDF
+- 抱怨專輯：梗圖當封面、判詞當專輯名，配一首 30 秒饒舌主打歌
+- 敲滿木魚後功德圓滿，產生分享圖，可下載或分享到 IG、LINE
 - 輸入的抱怨只在瀏覽器裡使用，不會上傳或儲存
 
 ## 怎麼跑起來
@@ -23,24 +23,25 @@
 
 1. 下載或 clone 這個 repo
 2. 直接用瀏覽器打開 `index.html`
-3. （建議）用 VS Code 的 **Live Server** 外掛開啟，存檔後會自動重新整理
+3. （建議）用 VS Code 的 **Live Server** 外掛開啟，存檔後會自動重新整理。直接雙擊開啟時，分享圖無法下載，要用 Live Server 才行
 
 ## 專案結構
 
 ```
 workplace-gongde/
-├── index.html          # 頁面結構（各步驟畫面）
-├── css/style.css       # 視覺樣式
-├── js/content.js       # 所有文案：情境、嘴替、判詞、迴向、功德項目  ← 改文案改這裡
-├── css/modes.css       # 三種陪伴模式的樣式
-├── js/modes.js         # 三種陪伴模式的特效
-├── js/rap.js           # 饒舌模式的歌詞與效果
-├── css/rap.css         # 饒舌模式的樣式
-├── js/app.js           # 互動邏輯
+├── index.html          # 頁面結構（四個步驟）
+├── css/style.css       # 全站樣式
+├── css/rap.css         # 歌詞樣式
+├── js/content.js       # 文案：情境、嘴替、判詞、迴向、功德項目  ← 改文案改這裡
+├── js/rap.js           # 饒舌歌詞與主打歌
+├── js/album.js         # 專輯封面
+├── js/merit.js         # 敲木魚、功德圓滿、分享圖
+├── js/app.js           # 流程控制
 ├── assets/memes/       # 梗圖，檔名對應情境 id（例：guess.png）
-├── assets/music/       # 音樂，檔名對應模式 id（roast / quiet / courage / rap .mp3）
+├── assets/music/album/ # 30 秒主打歌，檔名對應情境 id（例：guess.mp3）
 └── docs/
-    └── design-thinking.md   # 設計思考紀錄
+    ├── design-thinking.md   # 設計思考紀錄
+    └── 分工.md               # 分工與待辦
 ```
 
 ### 素材命名規則
@@ -48,7 +49,7 @@ workplace-gongde/
 | 類型 | 位置 | 檔名 |
 | --- | --- | --- |
 | 梗圖 | `assets/memes/` | `guess.png`、`revise.png`、`rush.png`、`firefight.png`、`leave.png`、`other.png` |
-| 音樂 | `assets/music/` | `roast.mp3`、`quiet.mp3`、`courage.mp3`、`rap.mp3` |
+| 主打歌 | `assets/music/album/` | 檔名同梗圖，副檔名 `.mp3` |
 
 檔案放進去就會自動顯示；還沒放的會顯示「待補」的佔位框。請只使用有授權或自己製作的素材。
 

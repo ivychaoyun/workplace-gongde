@@ -1,6 +1,11 @@
-/* 「幫我饒舌」模式的樣式，由 feature/rap-mode 負責。 */
+/* 主打歌區塊的樣式，由 feature/rap-mode 負責。 */
 
-body[data-mode="rap"] .response-text {
+.lyrics {
+  margin: 0 0 16px;
+  padding: 0;
   white-space: pre-line;
-  font-size: clamp(20px, 4.5vw, 26px);
+  font-family: var(--serif);
+  font-weight: 900;
+  font-size: clamp(18px, 4vw, 22px);
+  line-height: 1.7;
 }

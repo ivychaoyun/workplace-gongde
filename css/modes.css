@@ -1,6 +1,0 @@
-/* 三種陪伴模式各自的樣式，由 feature/mode-experience 負責。
-   body 會帶 data-mode="roast" / "quiet" / "courage" */
-
-body[data-mode="quiet"] #step-response { }
-body[data-mode="roast"] #step-response { }
-body[data-mode="courage"] #step-response { }

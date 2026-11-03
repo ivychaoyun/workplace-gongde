@@ -1,25 +1,26 @@
-// 互動邏輯。文案在 content.js。
+// 流程控制：寄放 → 專輯 → 木魚 → 功德圓滿。
+// 文案在 content.js，歌在 rap.js，封面在 album.js，木魚與分享在 merit.js。
 
 const state = {
   scenario: null,
-  mode: null,
-  fishCount: 0,
 };
 
 const $ = (sel) => document.querySelector(sel);
-const STEPS = ["deposit", "mode", "response", "merits", "slip"];
+const STEPS = ["deposit", "album", "fish", "complete"];
 
 function showStep(name) {
   STEPS.forEach((s) => $(`#step-${s}`).classList.toggle("is-active", s === name));
-  // 進度條只有四格，merits 併入「功德單」
-  const progressName = name === "merits" ? "slip" : name;
   document.querySelectorAll(".progress li").forEach((li) => {
-    li.classList.toggle("is-current", li.dataset.step === progressName);
+    li.classList.toggle("is-current", li.dataset.step === name);
   });
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-// 步驟一：情境
+function currentScenario() {
+  return state.scenario || FALLBACK_SCENARIO;
+}
+
+// 步驟一：寄放
 function renderScenarios() {
   const grid = $("#scenario-grid");
   SCENARIOS.forEach((sc) => {
@@ -40,124 +41,54 @@ function renderScenarios() {
 
 function updateDepositButton() {
   const hasText = $("#complaint").value.trim().length > 0;
-  $("#to-mode").disabled = !(state.scenario || hasText);
+  $("#to-album").disabled = !(state.scenario || hasText);
 }
 
-// 步驟二：模式
-function renderModes() {
-  const list = $("#mode-list");
-  MODES.forEach((m) => {
-    const btn = document.createElement("button");
-    btn.className = `mode mode-${m.id}`;
-    btn.type = "button";
-    btn.innerHTML = `<strong>${m.label}</strong><span>${m.desc}</span>`;
-    btn.addEventListener("click", () => {
-      state.mode = m;
-      renderResponse();
-      applyModeEffect(m.id);
-      showStep("response");
-    });
-    list.appendChild(btn);
-  });
-}
-
-// 步驟三：回應
-function currentScenario() {
-  return state.scenario || FALLBACK_SCENARIO;
-}
-
-function renderResponse() {
+// 步驟二：專輯
+function renderAlbum() {
   const sc = currentScenario();
-  $("#case-tag").textContent = `${sc.label}・${state.mode.label}`;
-  $("#response-text").textContent =
-    state.mode.id === "rap" ? getRapVerse(sc.id) : sc[state.mode.id];
+  $("#album-roast").textContent = sc.roast;
+  $("#album-lyrics").textContent = getRapVerse(sc.id);
+  drawCover($("#cover"), sc);
 
-  const memePath = `assets/memes/${sc.id}.png`;
-  const img = $("#meme-img");
-  $("#meme-path").textContent = memePath;
-  img.hidden = false;
-  $("#meme-placeholder").hidden = true;
-  img.onerror = () => {
-    img.hidden = true;
-    $("#meme-placeholder").hidden = false;
-  };
-  img.src = memePath;
-  img.alt = `${sc.label}梗圖`;
-
-  const musicPath = `assets/music/${state.mode.id}.mp3`;
-  const audio = $("#music");
-  $("#music-path").textContent = musicPath;
+  const songPath = getSongPath(sc.id);
+  const audio = $("#song");
+  $("#song-path").textContent = songPath;
   audio.hidden = false;
-  $("#music-placeholder").hidden = true;
+  $("#song-placeholder").hidden = true;
   audio.onerror = () => {
     audio.hidden = true;
-    $("#music-placeholder").hidden = false;
+    $("#song-placeholder").hidden = false;
   };
-  audio.src = musicPath;
+  audio.src = songPath;
   audio.load();
 }
 
-function hitFish(e) {
-  state.fishCount += 1;
-  $("#fish-count").textContent = state.fishCount;
-  const btn = e.currentTarget;
-  btn.classList.remove("is-hit");
-  void btn.offsetWidth; // 重新觸發動畫
-  btn.classList.add("is-hit");
-
-  const plus = document.createElement("span");
-  plus.className = "fish-plus";
-  plus.textContent = "怨氣 −1";
-  btn.appendChild(plus);
-  setTimeout(() => plus.remove(), 900);
-}
-
-// 步驟四：功德
+// 步驟四：功德圓滿
 function renderMerits() {
   const list = $("#merit-list");
   MERITS.forEach((text, i) => {
     const label = document.createElement("label");
     label.className = "merit";
     label.innerHTML = `<input type="checkbox" value="${i}"><span>${text}</span>`;
+    label.querySelector("input").addEventListener("change", renderShareCard);
     list.appendChild(label);
   });
 }
 
-function renderSlip() {
-  const sc = currentScenario();
-  const checked = [...document.querySelectorAll("#merit-list input:checked")].map(
+function checkedMerits() {
+  return [...document.querySelectorAll("#merit-list input:checked")].map(
     (el) => MERITS[Number(el.value)]
   );
-  const today = new Date();
+}
 
-  $("#slip-date").textContent = today.toLocaleDateString("zh-TW", {
-    year: "numeric", month: "long", day: "numeric",
-  });
-  $("#slip-no").textContent = String(Math.floor(Math.random() * 100000)).padStart(5, "0");
-  $("#slip-case").textContent = sc.label;
-  $("#slip-verdict").textContent = sc.verdict;
-  $("#slip-blessing").textContent = sc.blessing;
-
-  const ul = $("#slip-merits");
-  ul.innerHTML = "";
-  const items = checked.length ? checked : ["撐過了今天（這本身就算）"];
-  items.forEach((t) => {
-    const li = document.createElement("li");
-    li.textContent = t;
-    ul.appendChild(li);
-  });
-
-  // 每項功德 10 點，敲木魚每 10 下加 1 點，只是好玩
-  const total = items.length * 10 + Math.floor(state.fishCount / 10);
-  $("#slip-total").textContent = total;
+function renderShareCard() {
+  return drawShareCard($("#share-card"), currentScenario(), checkedMerits());
 }
 
 function restart() {
   state.scenario = null;
-  state.mode = null;
-  state.fishCount = 0;
-  delete document.body.dataset.mode;
-  $("#fish-count").textContent = "0";
+  $("#song").pause();
   $("#complaint").value = "";
   document.querySelectorAll(".scenario").forEach((b) => b.classList.remove("is-selected"));
   document.querySelectorAll("#merit-list input").forEach((el) => (el.checked = false));
@@ -167,22 +98,29 @@ function restart() {
 
 // 綁定事件
 renderScenarios();
-renderModes();
 renderMerits();
+$("#fish-goal").textContent = FISH_GOAL;
 
 $("#complaint").addEventListener("input", updateDepositButton);
-$("#to-mode").addEventListener("click", () => showStep("mode"));
-$("#fish-btn").addEventListener("click", hitFish);
-$("#to-slip").addEventListener("click", () => {
-  renderSlip();
-  showStep("slip");
+$("#to-album").addEventListener("click", () => {
+  renderAlbum();
+  showStep("album");
 });
+$("#to-fish").addEventListener("click", () => {
+  $("#song").pause();
+  resetFish();
+  showStep("fish");
+});
+$("#fish-btn").addEventListener("click", (e) => {
+  if (hitFish(e.currentTarget)) {
+    renderShareCard();
+    setTimeout(() => showStep("complete"), 700);
+  }
+});
+$("#share").addEventListener("click", () => shareCard($("#share-card")));
+$("#download").addEventListener("click", () => downloadCard($("#share-card")));
 $("#restart").addEventListener("click", restart);
-$("#print").addEventListener("click", () => window.print());
 
 document.querySelectorAll("[data-back]").forEach((btn) =>
   btn.addEventListener("click", () => showStep(btn.dataset.back))
-);
-document.querySelectorAll("[data-go]").forEach((btn) =>
-  btn.addEventListener("click", () => showStep(btn.dataset.go))
 );

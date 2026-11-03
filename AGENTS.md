@@ -5,17 +5,20 @@
 
 ## 專案是什麼
 
-「職場功德所」：讓上班族匿名寄放工作怨氣，透過幽默嘴替、梗圖、音樂與「今日功德單」短暫喘息的網頁原型。
+「職場功德所」：讓上班族匿名寄放工作怨氣，把抱怨變成一張饒舌「抱怨專輯」，敲木魚功德圓滿後分享到社群的網頁原型。
 四人學生團隊協作，設計思考紀錄在 [docs/design-thinking.md](docs/design-thinking.md)。
+
+流程：寄放抱怨（`#step-deposit`）→ 抱怨專輯（`#step-album`）→ 敲木魚（`#step-fish`）→ 功德圓滿與分享（`#step-complete`）。沒有「陪伴模式」，不要再加回來，除非組員要求。
 
 **最重要的原則：功德不等於忍耐不合理的事情。** 準時下班、拒絕額外工作、開口求助都算功德。任何文案或功能都不能鼓勵使用者吞忍。
 
 ## 技術
 
 - 純 HTML / CSS / 原生 JavaScript，**沒有框架、沒有建置工具、沒有 npm**。不要引入 React、Tailwind、打包工具或套件，除非組員明確要求。
-- 腳本用一般 `<script>` 依序載入（`content.js` → `modes.js` → `rap.js` → `app.js`），共用全域變數，不是 ES module。
+- 腳本用一般 `<script>` 依序載入（`content.js` → `rap.js` → `album.js` → `merit.js` → `app.js`），共用全域變數，不是 ES module。
 - 字型從 Google Fonts 載入，其他資源都在本地。
-- 使用者輸入的抱怨只在瀏覽器中使用，**不可送到任何伺服器、不可存進 localStorage**。
+- 使用者輸入的抱怨只在瀏覽器中使用，**不可送到任何伺服器、不可存進 localStorage**；也不要印在分享圖上。
+- 封面與分享圖用 Canvas 繪製；用 `file://` 開啟時無法匯出圖片，請用本機伺服器測試。
 
 ## 執行與檢查
 
@@ -23,31 +26,30 @@
 python3 -m http.server 5173   # 在專案根目錄執行，然後打開 http://localhost:5173
 ```
 
-沒有自動化測試。改完請在瀏覽器實際走一遍流程：選情境 → 選模式 → 回應頁 → 勾功德 → 功德單 → 列印預覽，並檢查手機寬度（375px）。
+沒有自動化測試。改完請在瀏覽器實際走一遍流程：選情境 → 專輯頁 → 敲木魚 → 功德圓滿 → 下載分享圖，並檢查手機寬度（375px）。
 
 ## 檔案地圖
 
 | 檔案 | 用途 | 負責分支 |
 | --- | --- | --- |
-| `index.html` | 五個步驟畫面（`#step-deposit`、`#step-mode`、`#step-response`、`#step-merits`、`#step-slip`） | 共用 |
-| `js/app.js` | 狀態、步驟切換、渲染 | 共用 |
-| `js/content.js` | 所有文案：`SCENARIOS`、`FALLBACK_SCENARIO`、`MODES`、`MERITS` | `feature/memes-humor` |
-| `assets/memes/<情境id>.png` | 梗圖，缺檔會自動顯示佔位框 | `feature/memes-humor` |
-| `js/modes.js` | `applyModeEffect(modeId)`：各陪伴模式的特效 | `feature/mode-experience` |
-| `css/modes.css` | 依 `body[data-mode="roast|quiet|courage"]` 切換樣式 | `feature/mode-experience` |
-| `js/rap.js` | 饒舌模式：`RAP_VERSES`（每情境一段歌詞）、`getRapVerse()`、`startRap()` | `feature/rap-mode` |
-| `css/rap.css` | `body[data-mode="rap"]` 的樣式 | `feature/rap-mode` |
-| `assets/music/rap.mp3` | 饒舌伴奏 | `feature/rap-mode` |
-| `css/style.css` | 全站樣式與色彩變數（`:root`） | `feature/music-visual` |
-| `assets/music/<模式id>.mp3` | 其他模式的音樂，缺檔會自動顯示佔位框 | `feature/music-visual` |
+| `index.html` | 四個步驟畫面 | 共用 |
+| `js/app.js` | 狀態、步驟切換、串接各模組 | 共用 |
+| `css/style.css` | 全站樣式與色彩變數（`:root`），依區塊註解分工 | 共用 |
+| `js/content.js` | 文案：`SCENARIOS`（`roast` 嘴替、`verdict` 判詞＝專輯名、`blessing` 迴向）、`FALLBACK_SCENARIO`、`MERITS` | `feature/memes-humor` |
+| `assets/memes/<情境id>.png` | 梗圖，當專輯封面背景；缺檔會改用漸層 | `feature/memes-humor` |
+| `js/rap.js` | `RAP_VERSES`（每情境一段歌詞）、`getRapVerse()`、`getSongPath()`、`startRap()` | `feature/rap-mode` |
+| `css/rap.css` | 歌詞樣式 | `feature/rap-mode` |
+| `assets/music/album/<情境id>.mp3` | 30 秒主打歌；缺檔會顯示佔位框 | `feature/rap-mode` |
+| `js/album.js` | `drawCover(canvas, scenario)`、`wrapText()`、`COVER_COLORS` | `feature/album` |
+| `js/merit.js` | 木魚（`FISH_GOAL`、`hitFish()`）、`drawShareCard()`、`shareCard()`、`downloadCard()` | `feature/merit-share` |
 
 分工細節見 [docs/分工.md](docs/分工.md)。
 
 ## 修改規則
 
-- **只改目前分支負責的檔案。** 需要動 `index.html` 或 `js/app.js` 時，改動要小，並在回覆中明確告知使用者，因為其他組員也會改。
-- 情境的 `id` 同時是梗圖檔名與 `RAP_VERSES` 的 key，模式的 `id` 同時是音樂檔名與 `data-mode` 值；改 id 要一起改對應的地方。
-- 陪伴模式有四種：`roast`、`quiet`、`courage` 的文字在 `content.js` 的情境欄位；`rap` 的歌詞在 `rap.js`。
+- **只改目前分支負責的檔案。** 需要動 `index.html`、`js/app.js` 或 `css/style.css` 時，改動要小，並在回覆中明確告知使用者，因為其他組員也會改。
+- 情境的 `id` 同時是梗圖檔名、主打歌檔名與 `RAP_VERSES` 的 key；改 id 要一起改對應的地方。
+- `merit.js` 的分享圖會呼叫 `album.js` 的 `drawCover()`，改 `drawCover` 的參數要通知 merit-share。
 - 新增文案放在 `content.js`，不要把文字寫死在 `app.js` 或 HTML。
 - 沿用現有風格：2 空格縮排、雙引號、`const`、少量中文註解、CSS 使用 `:root` 的色彩變數。
 - 介面文字一律用**繁體中文（台灣用語）**。
