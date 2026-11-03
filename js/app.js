@@ -48,7 +48,6 @@ function updateDepositButton() {
 function renderAlbum() {
   const sc = currentScenario();
   $("#album-roast").textContent = sc.roast;
-  $("#album-lyrics").textContent = getRapVerse(sc.id);
   drawCover($("#cover"), sc);
 
   const songPath = getSongPath(sc.id);
@@ -62,6 +61,7 @@ function renderAlbum() {
   };
   audio.src = songPath;
   audio.load();
+  loadRap(sc, $("#complaint").value.trim()); // 歌詞由 AI 現編，見 rap.js
 }
 
 // 步驟四：功德圓滿
@@ -89,6 +89,7 @@ function renderShareCard() {
 function restart() {
   state.scenario = null;
   $("#song").pause();
+  stopRap();
   $("#complaint").value = "";
   document.querySelectorAll(".scenario").forEach((b) => b.classList.remove("is-selected"));
   document.querySelectorAll("#merit-list input").forEach((el) => (el.checked = false));
@@ -108,6 +109,7 @@ $("#to-album").addEventListener("click", () => {
 });
 $("#to-fish").addEventListener("click", () => {
   $("#song").pause();
+  stopRap();
   resetFish();
   showStep("fish");
 });
@@ -122,5 +124,8 @@ $("#download").addEventListener("click", () => downloadCard($("#share-card")));
 $("#restart").addEventListener("click", restart);
 
 document.querySelectorAll("[data-back]").forEach((btn) =>
-  btn.addEventListener("click", () => showStep(btn.dataset.back))
+  btn.addEventListener("click", () => {
+    stopRap();
+    showStep(btn.dataset.back);
+  })
 );

@@ -9,3 +9,40 @@
   font-size: clamp(18px, 4vw, 22px);
   line-height: 1.7;
 }
+
+/* 播放鈕與人聲開關 */
+.rap-player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.rap-voice {
+  padding: 6px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 99px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.rap-voice[aria-pressed="false"] { opacity: 0.55; }
+
+/* 卡拉 OK 字幕：唱到的那句放大，字一個一個亮起來 */
+.lyric-line {
+  display: block;
+  color: var(--ink-soft);
+  transition: color 0.2s, transform 0.2s;
+  transform-origin: left center;
+}
+
+.lyric-line.is-done { color: var(--ink); }
+
+.lyric-line.is-current {
+  color: var(--line);
+  transform: scale(1.08);
+}
+
+.lyric-on { color: var(--red); }
