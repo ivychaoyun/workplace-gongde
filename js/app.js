@@ -54,6 +54,7 @@ function renderModes() {
     btn.addEventListener("click", () => {
       state.mode = m;
       renderResponse();
+      applyModeEffect(m.id);
       showStep("response");
     });
     list.appendChild(btn);
@@ -154,6 +155,7 @@ function restart() {
   state.scenario = null;
   state.mode = null;
   state.fishCount = 0;
+  delete document.body.dataset.mode;
   $("#fish-count").textContent = "0";
   $("#complaint").value = "";
   document.querySelectorAll(".scenario").forEach((b) => b.classList.remove("is-selected"));

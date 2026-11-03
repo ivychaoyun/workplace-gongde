@@ -32,6 +32,8 @@ workplace-gongde/
 ├── index.html          # 頁面結構（各步驟畫面）
 ├── css/style.css       # 視覺樣式
 ├── js/content.js       # 所有文案：情境、嘴替、判詞、迴向、功德項目  ← 改文案改這裡
+├── css/modes.css       # 三種陪伴模式的樣式
+├── js/modes.js         # 三種陪伴模式的特效
 ├── js/app.js           # 互動邏輯
 ├── assets/memes/       # 梗圖，檔名對應情境 id（例：guess.png）
 ├── assets/music/       # 音樂，檔名對應模式 id（roast.mp3 / quiet.mp3 / courage.mp3）

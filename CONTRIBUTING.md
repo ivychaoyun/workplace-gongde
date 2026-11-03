@@ -17,7 +17,8 @@ git clone https://github.com/<帳號>/workplace-gongde.git
 ```bash
 git checkout main
 git pull                          # 先拿最新版本
-git checkout -b 你的名字/要做的事     # 例：amy/rush-copy
+git checkout feature/你負責的分支
+git merge main                    # 把 main 的新東西合進來
 ```
 
 ## 做完之後
@@ -25,20 +26,21 @@ git checkout -b 你的名字/要做的事     # 例：amy/rush-copy
 ```bash
 git add .
 git commit -m "調整臨時加單的嘴替文案"
-git push -u origin 你的名字/要做的事
+git push -u origin feature/你負責的分支
 ```
 
 然後到 GitHub 頁面開一個 **Pull Request**，請至少一位組員看過再按 Merge。
 
-## 分工建議（減少互相衝突）
+## 分工
 
-| 負責項目 | 主要改的檔案 |
-| --- | --- |
-| 文案（嘴替、判詞、迴向、功德項目） | `js/content.js` |
-| 視覺 | `css/style.css` |
-| 流程與互動 | `index.html`、`js/app.js` |
-| 梗圖、音樂 | `assets/` |
-| 研究、訪談、測試紀錄 | `docs/` |
+四個組員各負責一個分支，詳細待辦見 [docs/分工.md](docs/分工.md)。
+
+```bash
+git checkout feature/dark-humor   # 換成你負責的分支
+git pull origin main              # 開工前先拿 main 的最新版本
+```
+
+做完一段就 push 到自己的分支，開 Pull Request 合併回 `main`。
 
 兩個人同時改同一個檔案時容易衝突，開工前在群組說一聲。
 
