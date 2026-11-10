@@ -1,0 +1,9 @@
+{
+  "name": "workplace-gongde-rap",
+  "main": "worker.js",
+  "compatibility_date": "2026-06-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // 除了 localhost，正式網站的網址加在這裡（逗號分隔）
+  "vars": { "ALLOWED_ORIGINS": "https://ivychaoyun.github.io" },
+  "ratelimits": [{ "name": "RAP_LIMIT", "namespace_id": "1002", "simple": { "limit": 5, "period": 60 } }]
+}

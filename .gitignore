@@ -5,3 +5,8 @@ Thumbs.db
 node_modules/
 *.log
 ~$*
+
+# AI 歌詞服務的本機設定
+api/.dev.vars
+api/.env
+api/.wrangler/
