@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>免費歌詞試做</title>
+  <title>歌詞庫配對</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@900&display=swap" rel="stylesheet">
@@ -21,7 +21,7 @@
     }
     * { box-sizing: border-box; }
     body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); line-height: 1.6; }
-    main { max-width: 960px; margin: 0 auto; padding: 24px 16px 64px; }
+    main { max-width: 1000px; margin: 0 auto; padding: 24px 16px 64px; }
     h1 { margin: 0; font-family: var(--serif); font-size: 30px; }
     .lede { margin: 4px 0 24px; color: var(--ink-soft); font-size: 14px; }
     .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 20px; align-items: start; }
@@ -33,28 +33,29 @@
     .field { display: block; margin-bottom: 12px; font-size: 14px; }
     .field span { display: block; margin-bottom: 4px; color: var(--ink-soft); }
     .examples { display: flex; flex-wrap: wrap; gap: 6px; }
-    .examples button { font: inherit; font-size: 13px; padding: 4px 10px; border-radius: 999px; border: 1.5px solid var(--line); background: #fff; cursor: pointer; }
-    .examples button:hover { border-color: var(--ink); }
-    .keywords { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 14px; }
-    .keywords dt { color: var(--ink-soft); }
-    .keywords dd { margin: 0; }
-    .tag { display: inline-block; padding: 0 8px; border-radius: 6px; font-size: 13px; }
-    .tag.user { background: var(--red); color: #fff; }
-    .tag.default { background: var(--line); color: var(--ink); }
+    .examples button, .reroll { font: inherit; font-size: 13px; padding: 4px 10px; border-radius: 999px; border: 1.5px solid var(--line); background: #fff; cursor: pointer; }
+    .examples button:hover, .reroll:hover { border-color: var(--ink); }
+    .song-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+    .song-title { margin: 0; font-family: var(--serif); font-size: 22px; }
+    .song-meta { margin: 0 0 12px; font-size: 13px; color: var(--ink-soft); }
+    .tag { display: inline-block; margin: 0 4px 4px 0; padding: 0 8px; border-radius: 6px; font-size: 13px; background: var(--line); }
+    .tag.hit { background: var(--red); color: #fff; }
     .lyrics { margin: 0; padding: 20px; border-radius: 14px; background: var(--ink); color: var(--paper); list-style: none; counter-reset: bar; }
     .lyrics li { font-family: var(--serif); font-size: clamp(18px, 3vw, 22px); line-height: 1.9; }
     .lyrics li::before { counter-increment: bar; content: counter(bar); display: inline-block; width: 1.8em; color: #8a7d70; font-family: var(--sans); font-size: 12px; }
-    .lyrics .user { color: var(--gold); }
-    .lyrics .default { color: #c9bba3; text-decoration: underline dotted; text-underline-offset: 4px; }
-    .legend { margin: 10px 0 0; font-size: 12px; color: var(--ink-soft); }
-    .legend .user { color: var(--red); font-weight: 700; }
-    @media (max-width: 720px) { .layout { grid-template-columns: 1fr; } }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 6px 8px; text-align: left; border-bottom: 1px dashed var(--line); vertical-align: top; }
+    th { color: var(--ink-soft); font-weight: 500; }
+    td.score { font-variant-numeric: tabular-nums; text-align: right; width: 3em; }
+    tr.picked td { background: #fff3d6; font-weight: 700; }
+    .stats { font-size: 13px; color: var(--ink-soft); }
+    @media (max-width: 760px) { .layout { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
 <main>
-  <h1>免費歌詞試做</h1>
-  <p class="lede">不用 AI、不花錢：從抱怨裡抓出「誰、什麼東西、什麼時候」，填進情境的歌詞範本。邊打字邊更新。範本與詞庫在 <code>js/lyrics.js</code>。</p>
+  <h1>歌詞庫配對</h1>
+  <p class="lede">網頁會從事先寫好的歌詞庫，依「情境＋抱怨」挑最適合的一首。不用 AI、不花錢、不上傳。歌詞在 <code>js/lyric-library.js</code>，配對規則在 <code>js/lyrics.js</code>。</p>
 
   <div class="layout">
     <div>
@@ -68,34 +69,45 @@
       </section>
 
       <section class="card">
-        <h2>抓到的關鍵字</h2>
-        <dl class="keywords" id="keywords"></dl>
+        <h2>候選排名</h2>
+        <p class="stats" id="stats"></p>
+        <table>
+          <thead><tr><th>曲名</th><th>對到的詞</th><th>分數</th></tr></thead>
+          <tbody id="ranking"></tbody>
+        </table>
       </section>
     </div>
 
     <section class="card">
-      <h2>歌詞</h2>
+      <div class="song-head">
+        <h2 class="song-title" id="title"></h2>
+        <button type="button" class="reroll" id="reroll">換一首</button>
+      </div>
+      <p class="song-meta" id="meta"></p>
+      <div id="tags"></div>
       <ol class="lyrics" id="lyrics"></ol>
-      <p class="legend"><span class="user">金色</span>＝從你的抱怨抓到的字；虛線＝沒抓到，用情境預設值。</p>
     </section>
   </div>
 </main>
 
 <script src="../js/content.js"></script>
+<script src="../js/lyric-library.js"></script>
 <script src="../js/lyrics.js"></script>
 <script>
 const $ = (s) => document.querySelector(s);
 const scenarios = [...SCENARIOS, FALLBACK_SCENARIO];
+const labelOf = Object.fromEntries(scenarios.map((sc) => [sc.id, sc.label]));
 
 $("#scenario").innerHTML = scenarios.map((sc, i) => `<option value="${i}">${sc.label}</option>`).join("");
 
 const EXAMPLES = [
-  [0, "主管只說要有感覺，提案改了三次還是不知道他要什麼"],
-  [1, "客戶半夜傳來第九版的設計稿意見，最後說用第一版"],
+  [0, "主管一直說你懂我意思吧，但我真的不懂"],
+  [1, "客戶說 logo 再大一點，顏色怪怪的"],
   [2, "週五下班前老闆丟來一份報表說很簡單"],
-  [3, "說好幫同事看一下網站，結果經理說之後都交給我"],
-  [4, "連假在墾丁，PM 一直問會議記錄放哪"],
-  [5, "甲方今天又在群組裡已讀不回"],
+  [3, "同事離職，交接只有半頁，現在全部變我的"],
+  [4, "請病假在家發燒，主管還一直傳訊息"],
+  [5, "我做的提案被主管拿去上台，功勞都是他的"],
+  [5, "今天開了三個會，結論都是下次再說"],
 ];
 $("#examples").innerHTML = EXAMPLES.map(([, text], i) => `<button type="button" data-i="${i}">${text.slice(0, 12)}⋯</button>`).join("");
 $("#examples").addEventListener("click", (e) => {
@@ -107,33 +119,34 @@ $("#examples").addEventListener("click", (e) => {
   render();
 });
 
-function render() {
+function render(reroll = false) {
   const sc = scenarios[$("#scenario").value];
-  const { parts, keywords } = buildLyrics(sc, $("#complaint").value);
-  const tpl = LYRIC_TEMPLATES[sc.id] || LYRIC_TEMPLATES.other;
+  const { verse, score, matched, ranking } = buildLyrics(sc, $("#complaint").value, { reroll });
+  if (!verse) return;
 
-  $("#keywords").innerHTML = Object.entries(LYRIC_SLOTS).map(([slot, { label }]) => {
-    const hit = keywords[slot];
-    return `<dt>${label}</dt><dd>${hit
-      ? `<span class="tag user">${hit}</span>`
-      : `<span class="tag default">${tpl.defaults[slot]}</span>（沒抓到，用預設）`}</dd>`;
-  }).join("");
-
-  $("#lyrics").replaceChildren(...parts.map((line) => {
+  $("#title").textContent = `〈${verse.title}〉`;
+  $("#meta").textContent = score > 0
+    ? `${labelOf[verse.scenario]}・${verse.id}・分數 ${score}`
+    : `${labelOf[verse.scenario]}・${verse.id}・沒有對到關鍵字，隨機挑一首`;
+  $("#tags").innerHTML = verse.tags.map((t) => `<span class="tag ${matched.includes(t) ? "hit" : ""}">${t}</span>`).join("");
+  $("#lyrics").replaceChildren(...verse.lines.map((line) => {
     const li = document.createElement("li");
-    line.forEach((p) => {
-      if (!p.slot) { li.append(p.text); return; }
-      const span = document.createElement("span");
-      span.className = p.fromUser ? "user" : "default";
-      span.textContent = p.text;
-      li.append(span);
-    });
+    li.textContent = line;
     return li;
   }));
+
+  $("#stats").textContent = `歌詞庫共 ${LYRIC_LIBRARY.length} 首，這次的候選有 ${ranking.length} 首。`;
+  $("#ranking").innerHTML = ranking.map((r) =>
+    `<tr class="${r.verse.id === verse.id ? "picked" : ""}">
+      <td>${r.verse.title}<br><small>${labelOf[r.verse.scenario]}</small></td>
+      <td>${r.matched.join("、") || "—"}</td>
+      <td class="score">${r.score}</td>
+    </tr>`).join("");
 }
 
-$("#scenario").addEventListener("change", render);
-$("#complaint").addEventListener("input", render);
+$("#scenario").addEventListener("change", () => render());
+$("#complaint").addEventListener("input", () => render());
+$("#reroll").addEventListener("click", () => render(true));
 render();
 </script>
 </body>

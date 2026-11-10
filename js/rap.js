@@ -1,7 +1,8 @@
 // 抱怨專輯的歌，由 feature/rap-mode 負責。
-// 歌詞由 AI 依「情境＋抱怨」現編（api/ 資料夾的服務）；連不上時改用下面預先寫好的 RAP_VERSES。
+// 歌詞預設從歌詞庫（lyric-library.js）依「情境＋抱怨」挑一首；也可以切成 AI 現編（見 LYRIC_SOURCE）。
+// 歌詞庫沒載入時才用下面固定的 RAP_VERSES。
 // 節拍、木魚聲、磬都用 Web Audio 即時合成，不需要音檔；小師父用瀏覽器內建語音跟著唱。
-// 30 秒主打歌放 assets/music/album/<情境id>.mp3（AI 歌詞時不播，因為字對不上）
+// 30 秒主打歌放 assets/music/album/<情境id>.mp3（只配固定的 RAP_VERSES，其他歌詞時不播，因為字對不上）
 
 const RAP_VERSES = {
   guess: [
@@ -50,16 +51,21 @@ function getSongPath(scenarioId) {
   return `assets/music/album/${scenarioId}.mp3`;
 }
 
-// ---------- AI 現編歌詞 ----------
-// 部署後的服務網址；空字串代表不用 AI，直接唱預設歌詞
+// ---------- 歌詞來源 ----------
+// "library"：從事先寫好的歌詞庫挑（lyric-library.js），不花錢、不上傳，是預設
+// "ai"：交給 AI 現編（api/ 資料夾的服務），連不上時改用歌詞庫
+const LYRIC_SOURCE = "library";
+
+// AI 歌詞服務的網址；空字串代表不用 AI
 const RAP_API_URL = "https://workplace-gongde-rap.lisashe56.workers.dev/rap";
 
+// 回傳 { lines, title, source: "ai" | "library" | "fixed" }
 async function fetchRapLines(scenario, complaint) {
-  // 備用歌詞：範本＋關鍵字填空（lyrics.js），沒有載入時用固定的 RAP_VERSES
-  const fallback = {
-    lines: typeof buildLyrics === "function" ? buildLyrics(scenario, complaint).lines : RAP_VERSES[scenario.id] || RAP_VERSES.other,
-    ai: false,
-  };
+  const picked = typeof buildLyrics === "function" ? buildLyrics(scenario, complaint) : null;
+  const fallback = picked && picked.verse
+    ? { lines: picked.lines, title: picked.verse.title, source: "library" }
+    : { lines: RAP_VERSES[scenario.id] || RAP_VERSES.other, title: "", source: "fixed" };
+  if (LYRIC_SOURCE !== "ai") return fallback;
   if (!RAP_API_URL) return fallback;
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), 25000);
@@ -72,7 +78,7 @@ async function fetchRapLines(scenario, complaint) {
     });
     if (!res.ok) throw new Error(res.status);
     const data = await res.json();
-    return { lines: data.lines, ai: true };
+    return { lines: data.lines, title: "小師父現編", source: "ai" };
   } catch (e) {
     console.info("改用預設歌詞：", e.message);
     return fallback;
@@ -226,7 +232,7 @@ function sing(text, seconds) {
 }
 
 // ---------- 專輯頁：載入歌詞、播放、卡拉 OK 字幕 ----------
-const rap = { lines: [], ai: false, raf: 0, sung: -1, token: 0 };
+const rap = { lines: [], source: "fixed", raf: 0, sung: -1, token: 0 };
 
 // renderAlbum() 呼叫：先顯示作詞中，拿到歌詞後放上播放鈕
 async function loadRap(scenario, complaint) {
@@ -235,15 +241,16 @@ async function loadRap(scenario, complaint) {
   const box = document.querySelector("#album-lyrics");
   const player = ensurePlayer();
   player.hidden = true;
-  box.textContent = RAP_API_URL ? "小師父作詞中⋯⋯" : getRapVerse(scenario.id);
-  const { lines, ai } = await fetchRapLines(scenario, complaint);
+  box.textContent = "小師父作詞中⋯⋯";
+  const { lines, title, source } = await fetchRapLines(scenario, complaint);
   if (token !== rap.token) return; // 使用者已經離開或重來
   rap.lines = lines;
-  rap.ai = ai;
+  rap.source = source;
+  document.querySelector(".track-label").textContent = title ? `主打歌〈${title}〉` : "主打歌";
   renderLyrics(-1, 0);
   player.hidden = false;
-  // AI 歌詞跟預錄的主打歌對不上，改用合成節拍
-  if (ai) {
+  // 歌詞庫或 AI 的歌詞，跟依情境預錄的主打歌對不上，改用合成節拍
+  if (source !== "fixed") {
     document.querySelector("#song").hidden = true;
     document.querySelector("#song-placeholder").hidden = true;
   }
