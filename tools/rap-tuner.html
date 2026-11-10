@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rap 調音台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #f6efe2;
+      --card: #fffaf1;
+      --ink: #2b2420;
+      --ink-soft: #6b5f55;
+      --red: #b8322a;
+      --line: #d8c9ae;
+      --dim: #c9bba3;
+      --serif: "Noto Serif TC", serif;
+      --sans: "Noto Sans TC", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); line-height: 1.6; }
+    main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; }
+    h1 { margin: 0; font-family: var(--serif); font-size: 30px; }
+    .lede { margin: 4px 0 24px; color: var(--ink-soft); font-size: 14px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 20px; align-items: start; }
+    .card { background: var(--card); border: 2px solid var(--line); border-radius: 14px; padding: 16px; }
+    .card + .card { margin-top: 16px; }
+    .card h2 { margin: 0 0 12px; font-size: 15px; color: var(--red); letter-spacing: 0.1em; }
+    label.row { display: grid; grid-template-columns: 7.5em minmax(0, 1fr) 4.5em; align-items: center; gap: 8px; margin: 8px 0; font-size: 14px; }
+    label.row output { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+    .check { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-size: 14px; }
+    select, textarea, input[type=number] { width: 100%; font: inherit; padding: 8px 10px; border: 2px solid var(--line); border-radius: 10px; background: #fff; }
+    textarea { min-height: 150px; resize: vertical; font-size: 16px; line-height: 1.8; }
+    input[type=range] { width: 100%; accent-color: var(--red); }
+    .hint { margin: 4px 0 0; font-size: 12px; color: var(--ink-soft); }
+    .counts { margin: 8px 0 0; padding: 0; list-style: none; font-size: 13px; }
+    .counts li { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; border-bottom: 1px dashed var(--line); }
+    .counts .warn { color: var(--red); font-weight: 700; }
+    .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+    button { font: inherit; cursor: pointer; padding: 10px 18px; border-radius: 999px; border: 2px solid var(--ink); background: transparent; font-weight: 700; }
+    button.primary { background: var(--red); border-color: var(--red); color: #fff; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .stage { position: sticky; top: 16px; }
+    .display { min-height: 210px; display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: 20px; border-radius: 14px; background: var(--ink); color: var(--paper); }
+    .display .bar-no { font-size: 12px; color: var(--dim); letter-spacing: 0.15em; }
+    .display .line { font-family: var(--serif); font-size: clamp(24px, 4vw, 34px); line-height: 1.4; }
+    .display .chunk { color: #6f645a; transition: color 0.08s; }
+    .display .chunk.on { color: #f3c96b; }
+    .display .chunk + .chunk { margin-left: 0.35em; }
+    .display .next { font-size: 14px; color: var(--dim); }
+    .beats { display: grid; grid-template-columns: repeat(16, 1fr); gap: 3px; margin-top: 12px; }
+    .beats span { height: 10px; border-radius: 3px; background: var(--line); }
+    .beats span.q { background: var(--dim); }
+    .beats span.hit { background: var(--red); }
+    .beats span.now { outline: 2px solid var(--ink); }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; font-size: 12px; color: var(--ink-soft); }
+    .stats strong { display: block; font-size: 18px; color: var(--ink); font-variant-numeric: tabular-nums; }
+    pre { margin: 0; padding: 12px; border-radius: 10px; background: #fff; border: 2px solid var(--line); font-size: 12px; white-space: pre-wrap; word-break: break-all; }
+    .toast { min-height: 1.4em; margin: 6px 0 0; font-size: 12px; color: var(--red); }
+
+    @media (max-width: 760px) {
+      .layout { grid-template-columns: 1fr; }
+      .stage { position: static; }
+      label.row { grid-template-columns: 6.5em minmax(0, 1fr) 4em; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Rap 調音台</h1>
+  <p class="lede">試不同的聲音、速度、斷句與節拍，找出念起來最像饒舌的設定，再按「複製設定」貼給程式用。建議用 Chrome 或 Edge；Edge 的「Natural」聲音最自然。</p>
+
+  <div class="layout">
+    <div>
+      <section class="card">
+        <h2>歌詞</h2>
+        <textarea id="lyrics" spellcheck="false">需求不講 只說你懂
+我是企劃 不是乩童
+猜對沒賞 猜錯重弄
+拜託開口 別讓我放空</textarea>
+        <p class="hint">一行一小節。用空白或「/」分段，會依「斷句方式」決定每段落在哪一拍。</p>
+        <ul class="counts" id="counts"></ul>
+      </section>
+
+      <section class="card">
+        <h2>聲音</h2>
+        <label class="row" style="grid-template-columns: 7.5em minmax(0,1fr)"><span>聲音</span><select id="voice"></select></label>
+        <p class="hint" id="voice-hint"></p>
+        <label class="row"><span>音高</span><input type="range" id="pitch" min="0.5" max="1.5" step="0.05" value="0.9"><output id="pitch-out"></output></label>
+        <label class="row"><span>音量</span><input type="range" id="volume" min="0.2" max="1" step="0.05" value="1"><output id="volume-out"></output></label>
+      </section>
+
+      <section class="card">
+        <h2>節奏</h2>
+        <label class="row"><span>BPM</span><input type="range" id="bpm" min="70" max="110" step="1" value="88"><output id="bpm-out"></output></label>
+        <label class="row" style="grid-template-columns: 7.5em minmax(0,1fr)"><span>斷句方式</span>
+          <select id="chunk">
+            <option value="line">整句一次念完</option>
+            <option value="marks" selected>依空白或「/」分段</option>
+            <option value="n2">每 2 字一段</option>
+            <option value="n4">每 4 字一段</option>
+          </select>
+        </label>
+        <label class="row" style="grid-template-columns: 7.5em minmax(0,1fr)"><span>語速</span>
+          <select id="rate-mode">
+            <option value="fixed" selected>固定語速</option>
+            <option value="auto">依字數自動調整（組員原本的做法）</option>
+          </select>
+        </label>
+        <label class="row" id="rate-row"><span>固定語速</span><input type="range" id="rate" min="0.8" max="2" step="0.05" value="1.3"><output id="rate-out"></output></label>
+        <label class="row"><span>提早開口</span><input type="range" id="lead" min="0" max="500" step="10" value="0"><output id="lead-out"></output></label>
+        <p class="hint">語音從「叫它念」到「真的出聲」有延遲。把「提早開口」調成右邊「語音延遲」的數字，讓「跟拍點差多少」接近 0，字就會落在拍點上。</p>
+      </section>
+
+      <section class="card">
+        <h2>加料</h2>
+        <label class="check"><input type="checkbox" id="accent" checked> 句尾押韻字加重（音高拉高、單獨念）</label>
+        <label class="check"><input type="checkbox" id="adlib" checked> 每小節最後一拍敲木魚補空拍</label>
+        <label class="check"><input type="checkbox" id="beat" checked> 播放伴奏</label>
+      </section>
+    </div>
+
+    <div class="stage">
+      <section class="card">
+        <div class="display" id="display">
+          <span class="bar-no" id="bar-no">準備好了按「開始」</span>
+          <span class="line" id="line">—</span>
+          <span class="next" id="next"></span>
+        </div>
+        <div class="beats" id="beats"></div>
+        <div class="stats">
+          <div>語音延遲（平均）<strong id="lat-avg">—</strong></div>
+          <div>跟拍點差多少<strong id="lat-last">—</strong></div>
+          <div>每小節<strong id="bar-sec">—</strong></div>
+        </div>
+        <div class="btns" style="margin-top: 14px">
+          <button class="primary" id="play">開始</button>
+          <button id="stop" disabled>停止</button>
+          <button id="loop-btn">循環：關</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>目前設定</h2>
+        <pre id="settings"></pre>
+        <div class="btns" style="margin-top: 10px">
+          <button id="copy">複製設定</button>
+        </div>
+        <p class="toast" id="toast"></p>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const synth = window.speechSynthesis;
+
+/* ---------- 設定 ---------- */
+const ui = {
+  lyrics: $("#lyrics"), voice: $("#voice"), pitch: $("#pitch"), volume: $("#volume"),
+  bpm: $("#bpm"), chunk: $("#chunk"), rateMode: $("#rate-mode"), rate: $("#rate"),
+  lead: $("#lead"), accent: $("#accent"), adlib: $("#adlib"), beat: $("#beat"),
+};
+
+function settings() {
+  return {
+    voice: ui.voice.value,
+    pitch: Number(ui.pitch.value),
+    volume: Number(ui.volume.value),
+    bpm: Number(ui.bpm.value),
+    chunk: ui.chunk.value,
+    rateMode: ui.rateMode.value,
+    rate: Number(ui.rate.value),
+    leadMs: Number(ui.lead.value),
+    accentRhyme: ui.accent.checked,
+    woodfishFill: ui.adlib.checked,
+  };
+}
+
+/* ---------- 歌詞拆段 ---------- */
+const countChars = (s) => [...s.replace(/[\s/，。、！？,.!?「」]/g, "")].length;
+
+function splitLine(line, mode, accent) {
+  const clean = line.trim();
+  if (!clean) return [];
+  let chunks;
+  if (mode === "line") chunks = [clean.replace(/\//g, " ")];
+  else if (mode === "marks") chunks = clean.split(/[\s/]+/).filter(Boolean);
+  else {
+    const n = mode === "n2" ? 2 : 4;
+    const chars = [...clean.replace(/[\s/]/g, "")];
+    chunks = [];
+    for (let i = 0; i < chars.length; i += n) chunks.push(chars.slice(i, i + n).join(""));
+  }
+  // 句尾押韻字獨立成一段
+  if (accent) {
+    const last = chunks[chunks.length - 1];
+    const chars = [...last];
+    if (chars.length > 1) chunks.splice(chunks.length - 1, 1, chars.slice(0, -1).join(""), chars[chars.length - 1]);
+  }
+  return chunks;
+}
+
+function lines() {
+  return ui.lyrics.value.split("\n").map((l) => l.trim()).filter(Boolean);
+}
+
+function renderCounts() {
+  const ls = lines();
+  const counts = ls.map(countChars);
+  const common = counts.slice().sort((a, b) =>
+    counts.filter((c) => c === b).length - counts.filter((c) => c === a).length)[0];
+  $("#counts").innerHTML = ls.map((l, i) =>
+    `<li><span>第 ${i + 1} 小節</span><span class="${counts[i] !== common ? "warn" : ""}">${counts[i]} 字${counts[i] !== common ? "（跟其他句不一樣長）" : ""}</span></li>`
+  ).join("");
+}
+
+/* ---------- 聲音清單 ---------- */
+function loadVoices() {
+  const vs = synth.getVoices().filter((v) => /^zh|cmn/i.test(v.lang));
+  const prev = ui.voice.value;
+  const score = (v) => (/natural/i.test(v.name) ? 0 : 1) + (/TW/i.test(v.lang) ? 0 : 0.5);
+  vs.sort((a, b) => score(a) - score(b));
+  ui.voice.innerHTML = vs.map((v) =>
+    `<option value="${v.name}">${/natural/i.test(v.name) ? "★ " : ""}${v.name}（${v.lang}）</option>`
+  ).join("") || `<option value="">找不到中文聲音</option>`;
+  if (prev && vs.some((v) => v.name === prev)) ui.voice.value = prev;
+  $("#voice-hint").textContent = vs.length
+    ? `找到 ${vs.length} 個中文聲音，★ 是比較自然的 Natural 聲音。不同瀏覽器、作業系統的清單不一樣。`
+    : "這個瀏覽器沒有中文語音，請改用 Chrome 或 Edge。";
+  if (typeof renderSettings === "function") renderSettings();
+}
+if (synth) { loadVoices(); synth.onvoiceschanged = loadVoices; }
+
+/* ---------- 伴奏（Web Audio） ---------- */
+const audio = { ctx: null, out: null, noise: null };
+function ensureAudio() {
+  if (!audio.ctx) {
+    const ctx = audio.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const comp = ctx.createDynamicsCompressor();
+    audio.out = ctx.createGain();
+    audio.out.gain.value = 0.7;
+    audio.out.connect(comp).connect(ctx.destination);
+    audio.noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+    const d = audio.noise.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  if (audio.ctx.state === "suspended") audio.ctx.resume();
+}
+function env(g, t, peak, decay) {
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(peak, t + 0.004);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+}
+function tone(type, f0, f1, t, peak, decay) {
+  const o = audio.ctx.createOscillator(), g = audio.ctx.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(f0, t);
+  if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + decay * 0.6);
+  env(g, t, peak, decay);
+  o.connect(g).connect(audio.out);
+  o.start(t); o.stop(t + decay + 0.05);
+}
+function noise(t, peak, decay, type, freq, q = 1) {
+  const s = audio.ctx.createBufferSource(), f = audio.ctx.createBiquadFilter(), g = audio.ctx.createGain();
+  s.buffer = audio.noise; f.type = type; f.frequency.value = freq; f.Q.value = q;
+  env(g, t, peak, decay);
+  s.connect(f).connect(g).connect(audio.out);
+  s.start(t, Math.random() * 0.5); s.stop(t + decay + 0.05);
+}
+const kick = (t) => tone("sine", 150, 42, t, 1, 0.42);
+const snare = (t) => { noise(t, 0.5, 0.2, "highpass", 1200); tone("triangle", 200, 140, t, 0.3, 0.12); };
+const hat = (t, a) => noise(t, a, 0.045, "highpass", 7500);
+const woodfish = (t, a = 0.6) => { tone("triangle", 560, 430, t, a, 0.13); noise(t, a * 0.45, 0.035, "bandpass", 1500, 5); };
+const KICK = [1,0,0,0, 0,0,0,1, 0,0,1,0, 0,0,0,0];
+const SNARE = [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,1];
+
+/* ---------- 演出排程 ---------- */
+const run = { on: false, loop: false, timers: [], raf: 0, start: 0, spb: 0, bars: [], lat: [] };
+
+function plan() {
+  const s = settings();
+  const spb = 60 / s.bpm;
+  const bars = lines().map((line) => {
+    const chunks = splitLine(line, s.chunk, s.accentRhyme);
+    // 段落平均分在前 3.5 拍，句尾押韻字固定落在第 4 拍前半（第 13 格），留最後半拍換氣
+    const n = chunks.length;
+    const slots = chunks.map((_, i) => {
+      if (s.accentRhyme && n > 1 && i === n - 1) return 12;
+      const span = s.accentRhyme && n > 1 ? 12 : 14;
+      const parts = s.accentRhyme && n > 1 ? n - 1 : n;
+      return Math.round((i * span) / parts);
+    });
+    return { line, chunks, slots };
+  });
+  return { s, spb, bars };
+}
+
+function speak(text, seconds, s, isRhyme, scheduledAt) {
+  synth.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  const v = synth.getVoices().find((x) => x.name === s.voice);
+  if (v) { u.voice = v; u.lang = v.lang; } else u.lang = "zh-TW";
+  const chars = countChars(text) || 1;
+  u.rate = s.rateMode === "auto" ? Math.min(Math.max(chars / (4.5 * seconds), 1), 2) : s.rate;
+  u.pitch = Math.min(2, s.pitch + (isRhyme ? 0.25 : 0));
+  u.volume = s.volume;
+  const calledAt = performance.now();
+  u.onstart = () => {
+    const now = performance.now();
+    run.lat.push(now - calledAt);
+    if (run.lat.length > 20) run.lat.shift();
+    const avg = run.lat.reduce((a, b) => a + b, 0) / run.lat.length;
+    $("#lat-avg").textContent = `${Math.round(avg)} ms`;
+    const off = Math.round(now - scheduledAt);
+    $("#lat-last").textContent = `${off > 0 ? "慢" : "快"} ${Math.abs(off)} ms`;
+  };
+  synth.speak(u);
+}
+
+function startShow() {
+  if (!synth) return;
+  ensureAudio();
+  stopShow(false);
+  const { s, spb, bars } = plan();
+  if (!bars.length) return;
+  run.on = true; run.spb = spb; run.bars = bars;
+  $("#bar-sec").textContent = `${(spb * 4).toFixed(2)} 秒`;
+  const step = spb / 4;
+  const t0 = audio.ctx.currentTime + 0.4 + spb * 4; // 先空一小節前奏
+  run.start = t0 - spb * 4;
+  const perfAt = (t) => performance.now() + (t - audio.ctx.currentTime) * 1000;
+
+  // 伴奏：前奏一小節＋每句一小節
+  for (let b = -1; b < bars.length; b++) {
+    for (let st = 0; st < 16; st++) {
+      const t = t0 + (b * 16 + st) * step;
+      if (ui.beat.checked) {
+        if (KICK[st]) kick(t);
+        if (SNARE[st]) snare(t);
+        if (st % 2 === 0) hat(t, st % 4 === 0 ? 0.16 : 0.09);
+      }
+      if (b >= 0 && ui.adlib.checked && st === 14) woodfish(t, 0.5);
+      if (b < 0 && st % 4 === 0) woodfish(t, 0.45); // 前奏數拍
+    }
+  }
+
+  // 人聲：每段在自己的拍格開口，扣掉「提早開口」
+  bars.forEach((bar, bi) => {
+    bar.chunks.forEach((chunk, ci) => {
+      const t = t0 + (bi * 16 + bar.slots[ci]) * step;
+      const nextSlot = ci + 1 < bar.slots.length ? bar.slots[ci + 1] : 16;
+      const seconds = (nextSlot - bar.slots[ci]) * step;
+      const at = perfAt(t);
+      const isRhyme = s.accentRhyme && bar.chunks.length > 1 && ci === bar.chunks.length - 1;
+      run.timers.push(setTimeout(() => speak(chunk, seconds, s, isRhyme, at), Math.max(0, at - performance.now() - s.leadMs)));
+    });
+  });
+
+  const end = t0 + bars.length * 16 * step;
+  run.timers.push(setTimeout(() => {
+    if (run.loop) startShow(); else stopShow(true);
+  }, (end - audio.ctx.currentTime) * 1000 + 100));
+
+  $("#play").disabled = true;
+  $("#stop").disabled = false;
+  tick();
+}
+
+function stopShow(resetDisplay = true) {
+  run.timers.forEach(clearTimeout);
+  run.timers = [];
+  cancelAnimationFrame(run.raf);
+  if (synth) synth.cancel();
+  if (audio.out) {
+    // 立刻靜音已排好的伴奏
+    audio.out.disconnect();
+    const comp = audio.ctx.createDynamicsCompressor();
+    audio.out = audio.ctx.createGain();
+    audio.out.gain.value = 0.7;
+    audio.out.connect(comp).connect(audio.ctx.destination);
+  }
+  run.on = false;
+  $("#play").disabled = false;
+  $("#stop").disabled = true;
+  if (resetDisplay) {
+    $("#bar-no").textContent = "準備好了按「開始」";
+    $("#line").textContent = "—";
+    $("#next").textContent = "";
+    renderBeats(null, -1);
+  }
+}
+
+/* ---------- 畫面 ---------- */
+function renderBeats(bar, cur) {
+  $("#beats").innerHTML = Array.from({ length: 16 }, (_, i) => {
+    const cls = [i % 4 === 0 ? "q" : "", bar && bar.slots.includes(i) ? "hit" : "", i === cur ? "now" : ""].join(" ");
+    return `<span class="${cls}"></span>`;
+  }).join("");
+}
+
+function tick() {
+  if (!run.on) return;
+  const step = run.spb / 4;
+  const pos = (audio.ctx.currentTime - run.start) / step - 16; // 扣掉前奏
+  const bi = Math.floor(pos / 16);
+  const st = Math.floor(pos - bi * 16);
+  if (bi < 0) {
+    $("#bar-no").textContent = `前奏 ${Math.max(1, Math.floor((pos + 16) / 4) + 1)} / 4`;
+    $("#line").textContent = "準備……";
+    $("#next").textContent = run.bars[0] ? `下一句：${run.bars[0].line}` : "";
+    renderBeats(run.bars[0], -1);
+  } else if (bi < run.bars.length) {
+    const bar = run.bars[bi];
+    $("#bar-no").textContent = `第 ${bi + 1} / ${run.bars.length} 小節`;
+    $("#line").innerHTML = bar.chunks.map((c, i) =>
+      `<span class="chunk ${bar.slots[i] <= st ? "on" : ""}">${c}</span>`).join("");
+    $("#next").textContent = run.bars[bi + 1] ? `下一句：${run.bars[bi + 1].line}` : "～ 收 ～";
+    renderBeats(bar, st);
+  }
+  run.raf = requestAnimationFrame(tick);
+}
+
+function renderSettings() {
+  const s = settings();
+  $("#pitch-out").textContent = s.pitch.toFixed(2);
+  $("#volume-out").textContent = s.volume.toFixed(2);
+  $("#bpm-out").textContent = s.bpm;
+  $("#rate-out").textContent = s.rate.toFixed(2);
+  $("#lead-out").textContent = `${s.leadMs} ms`;
+  $("#rate-row").style.display = s.rateMode === "fixed" ? "" : "none";
+  $("#settings").textContent = JSON.stringify(s, null, 2);
+  renderCounts();
+}
+
+/* ---------- 事件 ---------- */
+document.querySelectorAll("input, select, textarea").forEach((el) => el.addEventListener("input", renderSettings));
+$("#play").addEventListener("click", startShow);
+$("#stop").addEventListener("click", () => stopShow(true));
+$("#loop-btn").addEventListener("click", (e) => {
+  run.loop = !run.loop;
+  e.currentTarget.textContent = `循環：${run.loop ? "開" : "關"}`;
+});
+$("#copy").addEventListener("click", async () => {
+  const text = JSON.stringify(settings(), null, 2);
+  try {
+    await navigator.clipboard.writeText(text);
+    $("#toast").textContent = "已複製，可以貼到群組或程式裡。";
+  } catch (e) {
+    $("#toast").textContent = "瀏覽器不讓複製，請直接選取上面的文字。";
+  }
+});
+
+renderSettings();
+renderBeats(null, -1);
+if (!synth) $("#voice-hint").textContent = "這個瀏覽器不支援語音朗讀，請改用 Chrome 或 Edge。";
+</script>
+</body>
+</html>
