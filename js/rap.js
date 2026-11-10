@@ -55,7 +55,11 @@ function getSongPath(scenarioId) {
 const RAP_API_URL = "https://workplace-gongde-rap.lisashe56.workers.dev/rap";
 
 async function fetchRapLines(scenario, complaint) {
-  const fallback = { lines: RAP_VERSES[scenario.id] || RAP_VERSES.other, ai: false };
+  // 備用歌詞：範本＋關鍵字填空（lyrics.js），沒有載入時用固定的 RAP_VERSES
+  const fallback = {
+    lines: typeof buildLyrics === "function" ? buildLyrics(scenario, complaint).lines : RAP_VERSES[scenario.id] || RAP_VERSES.other,
+    ai: false,
+  };
   if (!RAP_API_URL) return fallback;
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), 25000);
