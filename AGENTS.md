@@ -14,10 +14,15 @@
 
 ## 技術
 
-- 純 HTML / CSS / 原生 JavaScript，**沒有框架、沒有建置工具、沒有 npm**。不要引入 React、Tailwind、打包工具或套件，除非組員明確要求。
+- 網頁是純 HTML / CSS / 原生 JavaScript，**沒有框架、沒有建置工具、沒有 npm**。不要引入 React、Tailwind、打包工具或套件，除非組員明確要求。唯一的例外是 `api/`（AI 歌詞服務，部署在 Cloudflare Workers），只有負責部署的人需要 npm。
 - 腳本用一般 `<script>` 依序載入（`content.js` → `rap.js` → `album.js` → `merit.js` → `app.js`），共用全域變數，不是 ES module。
 - 字型從 Google Fonts 載入，其他資源都在本地。
-- 使用者輸入的抱怨只在瀏覽器中使用，**不可送到任何伺服器、不可存進 localStorage**；也不要印在分享圖上。
+- **資料原則：不涉及資安的內容可以上傳。** 使用者的情境與抱怨可以送到本專案的 AI 歌詞服務（`api/`）寫成歌詞，但：
+  - 服務端**不可記錄、不可儲存**抱怨內容（不寫 log、不存資料庫）。
+  - 不可再轉送給 AI 歌詞服務以外的第三方。
+  - 網頁要清楚告訴使用者內容會交給 AI，並提醒不要寫真實姓名、公司名稱或個資。
+  - 抱怨不可存進 localStorage，也不要印在分享圖上。
+  - 金鑰、密碼等機密只能放在 Cloudflare 的 secret，不可進 repo 或網頁。
 - 封面與分享圖用 Canvas 繪製；用 `file://` 開啟時無法匯出圖片，請用本機伺服器測試。
 
 ## 執行與檢查
@@ -30,7 +35,7 @@ python3 -m http.server 5173   # 在專案根目錄執行，然後打開 http://l
 
 ## 檔案地圖
 
-| 檔案 | 用途 | 負責分支 |
+| 檔案 | 用途 | 主要負責 |
 | --- | --- | --- |
 | `index.html` | 四個步驟畫面 | `feature/flow-test`（D 統整） |
 | `js/app.js` | 狀態、步驟切換、串接各模組 | `feature/flow-test`（D 統整） |
@@ -42,12 +47,13 @@ python3 -m http.server 5173   # 在專案根目錄執行，然後打開 http://l
 | `assets/music/album/<情境id>.mp3` | 30 秒主打歌；缺檔會顯示佔位框 | `feature/rap-mode` |
 | `js/album.js` | `drawCover(canvas, scenario)`、`wrapText()`、`COVER_COLORS` | `feature/visual-share` |
 | `js/merit.js` | 木魚（`FISH_GOAL`、`hitFish()`）、`drawShareCard()`、`shareCard()`、`downloadCard()` | `feature/visual-share` |
+| `api/` | AI 歌詞服務（Cloudflare Worker）：`worker.js` 的 `SYSTEM` 是給 AI 的作詞規則 | 部署服務的組員 |
 
 分工細節見 [docs/分工.md](docs/分工.md)。
 
 ## 修改規則
 
-- **只改目前分支負責的檔案。** 需要動別人負責的檔案（特別是 `index.html`、`js/app.js`）時，改動要小，並在回覆中明確告知使用者，請他先跟負責人（D 統整）協調。
+- **分工是「主要負責」，不是限制。** 組員可以多做、改別人負責的檔案，但改動盡量小，並在回覆中明確告知使用者改了誰負責的檔案，請他在 PR 裡標註該負責人。
 - 情境的 `id` 同時是梗圖檔名、主打歌檔名與 `RAP_VERSES` 的 key；改 id 要一起改對應的地方。
 - `merit.js` 的分享圖會呼叫 `album.js` 的 `drawCover()`，兩者都屬 `feature/visual-share`。
 - 新增文案放在 `content.js`，不要把文字寫死在 `app.js` 或 HTML。

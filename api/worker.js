@@ -1,4 +1,4 @@
-// AI 現編饒舌歌詞的小服務（Cloudflare Worker），由 feature/music-visual 負責。
+// AI 現編饒舌歌詞的小服務（Cloudflare Worker），由部署這個服務的組員維護。
 // 網頁把「情境＋抱怨」送來，這裡交給 Claude 寫成歌詞再回傳。
 // 金鑰只存在 Cloudflare，不會出現在網頁裡；抱怨內容不記錄、不儲存。
 import Anthropic from "@anthropic-ai/sdk";

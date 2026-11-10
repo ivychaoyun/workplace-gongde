@@ -1,6 +1,6 @@
 # AI 歌詞服務
 
-網頁把「情境＋抱怨」送到這裡，交給 Claude 寫成 8 句饒舌歌詞再回傳。部署在 Cloudflare Workers（免費方案），由 feature/music-visual 負責。
+網頁把「情境＋抱怨」送到這裡，交給 Claude 寫成 8 句饒舌歌詞再回傳。部署在 Cloudflare Workers（免費方案），由部署這個服務的組員維護。
 
 - **網站本身還是純前端**，不需要 npm。只有這個資料夾需要，而且只有負責部署的人要用。
 - **金鑰**只存在 Cloudflare（`wrangler secret put ANTHROPIC_API_KEY`），不會進 repo，也不會出現在網頁裡。
