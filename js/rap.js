@@ -54,7 +54,14 @@ function getSongPath(scenarioId) {
 // ---------- 歌詞來源 ----------
 // "library"：從事先寫好的歌詞庫挑（lyric-library.js），不花錢、不上傳，是預設
 // "ai"：交給 AI 現編（api/ 資料夾的服務），連不上時改用歌詞庫
+// AI 現編目前先隱藏、不刪除，組員討論後再決定要不要打開；打開只要把下面改成 "ai"
 const LYRIC_SOURCE = "library";
+
+// 寄放頁的說明要跟歌詞來源一致：用 AI 時要告訴使用者內容會交給 AI
+if (LYRIC_SOURCE === "ai") {
+  document.querySelector("#deposit-lede").textContent =
+    "選一個最接近的情境，或直接寫下來。小師父會請 AI 把它寫成饒舌歌詞，內容不會被保存。請不要寫真實姓名、公司名稱或個人資料。";
+}
 
 // AI 歌詞服務的網址；空字串代表不用 AI
 const RAP_API_URL = "https://workplace-gongde-rap.lisashe56.workers.dev/rap";

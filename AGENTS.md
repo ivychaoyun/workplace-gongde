@@ -33,6 +33,12 @@ python3 -m http.server 5173   # 在專案根目錄執行，然後打開 http://l
 
 沒有自動化測試。改完請在瀏覽器實際走一遍流程：選情境 → 專輯頁 → 敲木魚 → 功德圓滿 → 下載分享圖，並檢查手機寬度（375px）。
 
+## 歌詞來源（重要）
+
+- 預設從歌詞庫 `js/lyric-library.js` 依情境與抱怨配對（`js/lyrics.js`）。
+- **AI 現編功能目前隱藏，不要刪除。** 程式（`js/rap.js` 的 `fetchRapLines`）和 `api/` 都保留，由 `js/rap.js` 的 `LYRIC_SOURCE` 切換：`"library"` 是目前設定，`"ai"` 會打開 AI 現編。要不要打開由組員討論決定，不要自行切換。
+- 寄放頁說明文字會跟著 `LYRIC_SOURCE` 自動切換，改說明時兩個版本都要顧到。
+
 ## 檔案地圖
 
 | 檔案 | 用途 | 主要負責 |
@@ -47,7 +53,9 @@ python3 -m http.server 5173   # 在專案根目錄執行，然後打開 http://l
 | `assets/music/album/<情境id>.mp3` | 30 秒主打歌；缺檔會顯示佔位框 | `feature/rap-mode` |
 | `js/album.js` | `drawCover(canvas, scenario)`、`wrapText()`、`COVER_COLORS` | `feature/visual-share` |
 | `js/merit.js` | 木魚（`FISH_GOAL`、`hitFish()`）、`drawShareCard()`、`shareCard()`、`downloadCard()` | `feature/visual-share` |
-| `api/` | AI 歌詞服務（Cloudflare Worker）：`worker.js` 的 `SYSTEM` 是給 AI 的作詞規則 | 部署服務的組員 |
+| `api/` | AI 歌詞服務（Cloudflare Worker，目前隱藏不用）：`worker.js` 的 `SYSTEM` 是給 AI 的作詞規則 | 部署服務的組員 |
+| `js/lyric-library.js` | 歌詞庫，50 首，格式見 `docs/歌詞庫製作指南.md` | `feature/rap-mode` |
+| `js/lyrics.js` | 依情境＋抱怨從歌詞庫配對：`buildLyrics()`、`rankLyrics()` | `feature/rap-mode` |
 
 分工細節見 [docs/分工.md](docs/分工.md)。
 
