@@ -42,7 +42,8 @@ workplace-gongde/
 ├── api/                # AI 歌詞服務（Cloudflare Worker，只有部署的人需要）
 └── docs/
     ├── design-thinking.md   # 設計思考紀錄
-    └── 分工.md               # 分工與待辦
+    ├── 分工.md               # 分工與待辦
+    └── 劇本.md               # 故事與每一幕的互動
 ```
 
 ### 素材命名規則

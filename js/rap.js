@@ -1,4 +1,4 @@
-// 抱怨專輯的歌，由 feature/rap-mode 負責。
+// 抱怨專輯的歌，由姵宣（peixuan）負責。
 // 歌詞預設從歌詞庫（lyric-library.js）依「情境＋抱怨」挑一首；也可以切成 AI 現編（見 LYRIC_SOURCE）。
 // 歌詞庫沒載入時才用下面固定的 RAP_VERSES。
 // 節拍、木魚聲、磬都用 Web Audio 即時合成，不需要音檔；小師父用瀏覽器內建語音跟著唱。

@@ -17,7 +17,7 @@ git clone https://github.com/<帳號>/workplace-gongde.git
 ```bash
 git checkout main
 git pull                          # 先拿最新版本
-git checkout feature/你負責的分支
+git checkout 你的名字分支
 git merge main                    # 把 main 的新東西合進來
 ```
 
@@ -26,17 +26,17 @@ git merge main                    # 把 main 的新東西合進來
 ```bash
 git add .
 git commit -m "調整臨時加單的嘴替文案"
-git push -u origin feature/你負責的分支
+git push -u origin 你的名字分支
 ```
 
-然後到 GitHub 頁面開一個 **Pull Request**，請至少一位組員看過再按 Merge。
+然後到 GitHub 頁面開一個 **Pull Request**，由趙芸看過後按 Merge。
 
 ## 分工
 
-四個組員各負責一個分支，詳細待辦見 [docs/分工.md](docs/分工.md)。
+每個人一個分支，名稱就是自己的名字：`cynthia`（欣亞）、`anqi`（安淇）、`peixuan`（姵宣）、`chaoyun`（趙芸）。詳細待辦見 [docs/分工.md](docs/分工.md)，故事見 [docs/劇本.md](docs/劇本.md)。
 
 ```bash
-git checkout feature/memes-humor  # 換成你負責的分支
+git checkout anqi                 # 換成你的名字分支
 git pull origin main              # 開工前先拿 main 的最新版本
 ```
 

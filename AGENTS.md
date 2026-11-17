@@ -43,27 +43,27 @@ python3 -m http.server 5173   # 在專案根目錄執行，然後打開 http://l
 
 | 檔案 | 用途 | 主要負責 |
 | --- | --- | --- |
-| `index.html` | 四個步驟畫面 | `feature/flow-test`（D 統整） |
-| `js/app.js` | 狀態、步驟切換、串接各模組 | `feature/flow-test`（D 統整） |
-| `css/style.css` | 全站樣式與色彩變數（`:root`） | `feature/visual-share` |
-| `js/content.js` | 文案：`SCENARIOS`（`roast` 嘴替、`verdict` 判詞＝專輯名、`blessing` 迴向）、`FALLBACK_SCENARIO`、`MERITS` | `feature/memes-humor` |
-| `assets/memes/<情境id>.png` | 梗圖，當專輯封面背景；缺檔會改用漸層 | `feature/memes-humor` |
-| `js/rap.js` | `RAP_VERSES`（每情境一段歌詞）、`getRapVerse()`、`getSongPath()`、`startRap()` | `feature/rap-mode` |
-| `css/rap.css` | 歌詞樣式 | `feature/rap-mode` |
-| `assets/music/album/<情境id>.mp3` | 30 秒主打歌；缺檔會顯示佔位框 | `feature/rap-mode` |
-| `js/album.js` | `drawCover(canvas, scenario)`、`wrapText()`、`COVER_COLORS` | `feature/visual-share` |
-| `js/merit.js` | 木魚（`FISH_GOAL`、`hitFish()`）、`drawShareCard()`、`shareCard()`、`downloadCard()` | `feature/visual-share` |
-| `api/` | AI 歌詞服務（Cloudflare Worker，目前隱藏不用）：`worker.js` 的 `SYSTEM` 是給 AI 的作詞規則 | 部署服務的組員 |
-| `js/lyric-library.js` | 歌詞庫，50 首，格式見 `docs/歌詞庫製作指南.md` | `feature/rap-mode` |
-| `js/lyrics.js` | 依情境＋抱怨從歌詞庫配對：`buildLyrics()`、`rankLyrics()` | `feature/rap-mode` |
+| `index.html` | 四個步驟畫面 | 趙芸 `chaoyun` |
+| `js/app.js` | 狀態、步驟切換、串接各模組 | 趙芸 `chaoyun` |
+| `css/style.css` | 全站樣式與色彩變數（`:root`） | 趙芸 `chaoyun` |
+| `js/content.js` | 文案：`SCENARIOS`（`roast` 嘴替、`verdict` 判詞＝專輯名、`blessing` 迴向）、`FALLBACK_SCENARIO`、`MERITS` | 欣亞 `cynthia` |
+| `assets/memes/<情境id>.png` | 梗圖，當專輯封面背景；缺檔會改用漸層 | 安淇 `anqi` |
+| `js/rap.js` | `RAP_VERSES`（每情境一段歌詞）、`getRapVerse()`、`getSongPath()`、`startRap()` | 姵宣 `peixuan` |
+| `css/rap.css` | 歌詞樣式 | 姵宣 `peixuan` |
+| `assets/music/album/<情境id>.mp3` | 30 秒主打歌；缺檔會顯示佔位框 | 姵宣 `peixuan` |
+| `js/album.js` | `drawCover(canvas, scenario)`、`wrapText()`、`COVER_COLORS` | 安淇 `anqi` |
+| `js/merit.js` | 木魚（`FISH_GOAL`、`hitFish()`）、`drawShareCard()`、`shareCard()`、`downloadCard()` | 安淇 `anqi` |
+| `api/` | AI 歌詞服務（Cloudflare Worker，目前隱藏不用）：`worker.js` 的 `SYSTEM` 是給 AI 的作詞規則 | 欣亞 `cynthia` |
+| `js/lyric-library.js` | 歌詞庫，50 首，格式見 `docs/歌詞庫製作指南.md` | 姵宣 `peixuan` |
+| `js/lyrics.js` | 依情境＋抱怨從歌詞庫配對：`buildLyrics()`、`rankLyrics()` | 姵宣 `peixuan` |
 
-分工細節見 [docs/分工.md](docs/分工.md)。
+分工細節見 [docs/分工.md](docs/分工.md)，故事與每一幕的互動見 [docs/劇本.md](docs/劇本.md)。
 
 ## 修改規則
 
 - **分工是「主要負責」，不是限制。** 組員可以多做、改別人負責的檔案，但改動盡量小，並在回覆中明確告知使用者改了誰負責的檔案，請他在 PR 裡標註該負責人。
 - 情境的 `id` 同時是梗圖檔名、主打歌檔名與 `RAP_VERSES` 的 key；改 id 要一起改對應的地方。
-- `merit.js` 的分享圖會呼叫 `album.js` 的 `drawCover()`，兩者都屬 `feature/visual-share`。
+- `merit.js` 的分享圖會呼叫 `album.js` 的 `drawCover()`，兩者都由安淇負責。
 - 新增文案放在 `content.js`，不要把文字寫死在 `app.js` 或 HTML。
 - 沿用現有風格：2 空格縮排、雙引號、`const`、少量中文註解、CSS 使用 `:root` 的色彩變數。
 - 介面文字一律用**繁體中文（台灣用語）**。
@@ -78,6 +78,6 @@ python3 -m http.server 5173   # 在專案根目錄執行，然後打開 http://l
 
 ## Git
 
-- `main` 是可展示的穩定版，由 D（統整與測試）負責合併；工作在 `feature/*` 分支進行，透過 Pull Request 合併。開 PR 前先把最新的 `main` 合進自己的分支。
+- `main` 是可展示的穩定版，由趙芸（整合）負責合併；每個人在自己名字的分支（`cynthia`、`anqi`、`peixuan`、`chaoyun`）工作，透過 Pull Request 合併。開 PR 前先把最新的 `main` 合進自己的分支。
 - commit 訊息用繁體中文，簡短描述做了什麼，例如「新增休假被找的三句嘴替」。
 - 不要直接 push 到 `main`，不要 force push，不要改寫別人的提交。

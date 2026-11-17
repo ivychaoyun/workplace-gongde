@@ -1,4 +1,4 @@
-// 所有文案集中在這裡，由 feature/memes-humor 負責。
+// 所有文案集中在這裡，由欣亞（cynthia）負責。
 // 每個情境的 id 也是梗圖檔名（assets/memes/<id>.png）與 rap.js 歌詞的 key。
 // verdict（判詞）會當成抱怨專輯的專輯名，越短越好。
 
