@@ -33,10 +33,10 @@ git push -u origin 你的名字分支
 
 ## 分工
 
-每個人一個分支，名稱就是自己的名字：`cynthia`（欣亞）、`anqi`（安淇）、`peixuan`（姵宣）、`chaoyun`（趙芸）。詳細待辦見 [docs/分工.md](docs/分工.md)，故事見 [docs/劇本.md](docs/劇本.md)。
+每個人一個分支，名稱就是自己的名字：`cynthia`（欣亞）、`foraianother8-ann`（安淇）、`peixuan`（姵宣）、`chaoyun`（趙芸）。詳細待辦見 [docs/分工.md](docs/分工.md)，故事見 [docs/劇本.md](docs/劇本.md)。
 
 ```bash
-git checkout anqi                 # 換成你的名字分支
+git checkout peixuan              # 換成你的名字分支
 git pull origin main              # 開工前先拿 main 的最新版本
 ```
 
