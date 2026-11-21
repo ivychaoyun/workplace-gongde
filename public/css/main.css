@@ -19,6 +19,10 @@
     color: #ffe2a3; background: linear-gradient(#b8352d, #8e231f); border: 2px solid var(--gold); border-radius: 6px;
     box-shadow: 0 4px 14px rgba(120,40,20,.25); pointer-events: none; white-space: nowrap; }
 
+  #walkKeys { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(150px + env(safe-area-inset-bottom)); z-index: 5;
+    padding: 6px 12px; border-radius: 999px; background: rgba(43,36,32,.72); color: #f6efe2; font: 500 12px/1.4 'Noto Sans TC', sans-serif;
+    white-space: nowrap; pointer-events: none; }
+  #walkKeys[hidden] { display: none; }
   #hint { position: fixed; top: calc(62px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
     font-size: 12px; color: rgba(74,42,30,.7); background: rgba(255,250,242,.7); padding: 4px 12px; border-radius: 99px;
     pointer-events: none; transition: opacity .6s; white-space: nowrap; }
