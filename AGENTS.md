@@ -5,67 +5,61 @@
 
 ## 專案是什麼
 
-「職場功德所」：讓上班族匿名寄放工作怨氣，把抱怨變成一張饒舌「抱怨專輯」，敲木魚功德圓滿後分享到社群的網頁原型。
-四人學生團隊協作，設計思考紀錄在 [docs/design-thinking.md](docs/design-thinking.md)。
+「職場功德所」：一個 3D 網頁體驗。上班族在辦公室遇到鳥事，靈魂出竅把抱怨唱成饒舌，飛到寺廟變成小和尚，敲木魚、領功德單，最後回到公司重新開始。
+四人學生團隊協作，設計思考紀錄在 [docs/design-thinking.md](docs/design-thinking.md)，故事與每一幕的互動在 [docs/劇本.md](docs/劇本.md)。
 
-流程：寄放抱怨（`#step-deposit`）→ 抱怨專輯（`#step-album`）→ 敲木魚（`#step-fish`）→ 功德圓滿與分享（`#step-complete`）。沒有「陪伴模式」，不要再加回來，除非組員要求。
+2D 版已停用（Git 標記 `v1-2d`），不要再把它加回來，除非組員要求。
 
 **最重要的原則：功德不等於忍耐不合理的事情。** 準時下班、拒絕額外工作、開口求助都算功德。任何文案或功能都不能鼓勵使用者吞忍。
 
 ## 技術
 
-- 網頁是純 HTML / CSS / 原生 JavaScript，**沒有框架、沒有建置工具、沒有 npm**。不要引入 React、Tailwind、打包工具或套件，除非組員明確要求。唯一的例外是 `api/`（AI 歌詞服務，部署在 Cloudflare Workers），只有負責部署的人需要 npm。
-- 腳本用一般 `<script>` 依序載入（`content.js` → `rap.js` → `album.js` → `merit.js` → `app.js`），共用全域變數，不是 ES module。
-- 字型從 Google Fonts 載入，其他資源都在本地。
-- **資料原則：不涉及資安的內容可以上傳。** 使用者的情境與抱怨可以送到本專案的 AI 歌詞服務（`api/`）寫成歌詞，但：
+- 網站在 `public/`：HTML、CSS、原生 JavaScript，3D 用 **three.js**（`public/index.html` 的 importmap 從 jsDelivr 載入固定版本 0.170.0）。**沒有建置工具**，不要引入 React、Tailwind、打包工具，除非組員要求。
+- `public/js/main.js` 是 ES module；`lyric-library.js`、`lyrics.js` 是一般 `<script>`，在 main.js 之前載入，透過全域的 `LYRIC_LIBRARY`、`buildLyrics()` 使用。
+- 後端只有一個：`worker.js`（Cloudflare Worker，線上版）與 `server.mjs`（本機版）共用 `rap.js` 的作詞規則。只有負責部署的人需要 npm。
+- **資料原則：不涉及資安的內容可以上傳。** 抱怨可以送到本專案的 `/api/rap` 寫成歌詞，但：
   - 服務端**不可記錄、不可儲存**抱怨內容（不寫 log、不存資料庫）。
   - 不可再轉送給 AI 歌詞服務以外的第三方。
   - 網頁要清楚告訴使用者內容會交給 AI，並提醒不要寫真實姓名、公司名稱或個資。
-  - 抱怨**可以**存在使用者自己的瀏覽器（例如 localStorage），也**可以**印在分享圖上；分享圖是使用者自己決定要不要分享的。
-  - 金鑰、密碼等機密只能放在 Cloudflare 的 secret，不可進 repo 或網頁。
-- 封面與分享圖用 Canvas 繪製；用 `file://` 開啟時無法匯出圖片，請用本機伺服器測試。
+  - 抱怨**可以**存在使用者自己的瀏覽器，也**可以**印在功德單或分享圖上。
+  - 金鑰只能放在 Cloudflare 的 secret 或本機的 `.env`，不可進 repo 或網頁。
+- `/api/rap` 只接受同一個網址送來的請求（`worker.js` 檢查 origin），不要開放給其他網站。
 
 ## 執行與檢查
 
 ```bash
-python3 -m http.server 5173   # 在專案根目錄執行，然後打開 http://localhost:5173
+python3 -m http.server 5175 --directory public   # 只看網頁，打開 http://localhost:5175
+npm start                                        # 連同 AI 歌詞服務（需要 .env 裡的金鑰）
 ```
 
-沒有自動化測試。改完請在瀏覽器實際走一遍流程：選情境 → 專輯頁 → 敲木魚 → 功德圓滿 → 下載分享圖，並檢查手機寬度（375px）。
+沒有自動化測試。改完請在瀏覽器實際走一遍：辦公室寫抱怨 → 靈魂出竅唱饒舌 → 飛到寺廟 → 敲木魚 → 功德單，並檢查手機寬度。
 
 ## 歌詞來源（重要）
 
-- 預設從歌詞庫 `js/lyric-library.js` 依情境與抱怨配對（`js/lyrics.js`）。
-- **AI 現編功能目前隱藏，不要刪除。** 程式（`js/rap.js` 的 `fetchRapLines`）和 `api/` 都保留，由 `js/rap.js` 的 `LYRIC_SOURCE` 切換：`"library"` 是目前設定，`"ai"` 會打開 AI 現編。要不要打開由組員討論決定，不要自行切換。
-- 寄放頁說明文字會跟著 `LYRIC_SOURCE` 自動切換，改說明時兩個版本都要顧到。
+- 預設從歌詞庫 `public/js/lyric-library.js` 依抱怨配對（`public/js/lyrics.js`）。
+- **AI 現編功能目前關閉，不要刪除。** 由 `public/js/main.js` 的 `LYRIC_SOURCE` 切換：`'library'` 是目前設定，`'ai'` 會呼叫 `/api/rap`，連不上時改用歌詞庫。要不要打開由組員討論決定，不要自行切換。
 
 ## 檔案地圖
 
 | 檔案 | 用途 | 主要負責 |
 | --- | --- | --- |
-| `index.html` | 四個步驟畫面 | 趙芸 `chaoyun` |
-| `js/app.js` | 狀態、步驟切換、串接各模組 | 趙芸 `chaoyun` |
-| `css/style.css` | 全站樣式與色彩變數（`:root`） | 趙芸 `chaoyun` |
-| `js/content.js` | 文案：`SCENARIOS`（`roast` 嘴替、`verdict` 判詞＝專輯名、`blessing` 迴向）、`FALLBACK_SCENARIO`、`MERITS` | 欣亞 `cynthia` |
-| `assets/memes/<情境id>.png` | 梗圖，當專輯封面背景；缺檔會改用漸層 | 安淇 `foraianother8-ann` |
-| `js/rap.js` | `RAP_VERSES`（每情境一段歌詞）、`getRapVerse()`、`getSongPath()`、`startRap()` | 姵宣 `peixuan` |
-| `css/rap.css` | 歌詞樣式 | 姵宣 `peixuan` |
-| `assets/music/album/<情境id>.mp3` | 30 秒主打歌；缺檔會顯示佔位框 | 姵宣 `peixuan` |
-| `js/album.js` | `drawCover(canvas, scenario)`、`wrapText()`、`COVER_COLORS` | 安淇 `foraianother8-ann` |
-| `js/merit.js` | 木魚（`FISH_GOAL`、`hitFish()`）、`drawShareCard()`、`shareCard()`、`downloadCard()` | 安淇 `foraianother8-ann` |
-| `api/` | AI 歌詞服務（Cloudflare Worker，目前隱藏不用）：`worker.js` 的 `SYSTEM` 是給 AI 的作詞規則 | 欣亞 `cynthia` |
-| `js/lyric-library.js` | 歌詞庫，50 首，格式見 `docs/歌詞庫製作指南.md` | 姵宣 `peixuan` |
-| `js/lyrics.js` | 依情境＋抱怨從歌詞庫配對：`buildLyrics()`、`rankLyrics()` | 姵宣 `peixuan` |
+| `public/index.html` | 頁面骨架、importmap | 趙芸 `chaoyun` |
+| `public/css/main.css` | 樣式 | 趙芸 `chaoyun` |
+| `public/js/main.js` | 3D 場景與整個流程。依區塊註解分工：辦公室、出竅（欣亞）／寺廟、木魚、功德單（安淇）／節拍、人聲（姵宣）／流程串接（趙芸） | 共用，之後會拆檔 |
+| `public/js/lyric-library.js` | 歌詞庫，格式見 `docs/歌詞庫製作指南.md` | 姵宣 `peixuan` |
+| `public/js/lyrics.js` | 依抱怨從歌詞庫配對：`buildLyrics()`、`rankLyrics()` | 姵宣 `peixuan` |
+| `public/js/content.js` | 情境文案（目前只有工具頁在用） | 欣亞 `cynthia` |
+| `public/assets/office/` | 辦公室背景、靈魂圖片 | 欣亞 `cynthia` |
+| `public/tools/` | Rap 調音台、歌詞庫配對 | 姵宣 `peixuan` |
+| `worker.js`、`server.mjs`、`rap.js`、`wrangler.jsonc` | AI 歌詞服務與部署 | 欣亞 `cynthia`／部署：趙芸 `chaoyun` |
 
-分工細節見 [docs/分工.md](docs/分工.md)，故事與每一幕的互動見 [docs/劇本.md](docs/劇本.md)。
+分工細節見 [docs/分工.md](docs/分工.md)。
 
 ## 修改規則
 
 - **分工是「主要負責」，不是限制。** 組員可以多做、改別人負責的檔案，但改動盡量小，並在回覆中明確告知使用者改了誰負責的檔案，請他在 PR 裡標註該負責人。
-- 情境的 `id` 同時是梗圖檔名、主打歌檔名與 `RAP_VERSES` 的 key；改 id 要一起改對應的地方。
-- `merit.js` 的分享圖會呼叫 `album.js` 的 `drawCover()`，兩者都由安淇負責。
-- 新增文案放在 `content.js`，不要把文字寫死在 `app.js` 或 HTML。
-- 沿用現有風格：2 空格縮排、雙引號、`const`、少量中文註解、CSS 使用 `:root` 的色彩變數。
+- `public/js/main.js` 還是一個大檔案，多人同時改容易衝突：改之前先在群組說一聲，改動盡量只在自己負責的區塊裡。
+- 沿用現有風格：2 空格縮排、`const`、少量中文註解；`main.js` 用單引號，歌詞庫與配對用雙引號，跟著各檔案原本的寫法。
 - 介面文字一律用**繁體中文（台灣用語）**。
 
 ## 文案界線（地獄梗也要遵守）
@@ -74,7 +68,7 @@ python3 -m http.server 5173   # 在專案根目錄執行，然後打開 http://l
 - 先理解、不說教，不強迫正向思考。
 - 不把忍耐、加班、犧牲包裝成美德。
 - 不宣稱有心理治療或提升幸福感的效果。
-- 梗圖與音樂只能用自製或有授權的素材，來源記在 `assets/*/CREDITS.md`。
+- 圖片與音樂只能用自製或有授權的素材，來源記在 `public/assets/CREDITS.md`。
 
 ## Git
 
