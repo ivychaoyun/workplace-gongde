@@ -1,224 +1,3 @@
-<!doctype html>
-<html lang="zh-Hant">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>職場功德所</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --cream: #fbf5ec;
-    --ink: #4a2a1e;
-    --red: #a8302a;
-    --gold: #d9a440;
-    --bubble: #fffaf2;
-  }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--cream); font-family: "Noto Sans TC", system-ui, sans-serif; color: var(--ink); }
-  #stage { position: fixed; inset: 0; touch-action: none; }
-  #stage canvas { display: block; }
-
-  /* 畫面底部淡出，像參考圖下緣的白霧 */
-  #fade { position: fixed; left: 0; right: 0; bottom: 0; height: 20vh; pointer-events: none;
-    background: linear-gradient(to bottom, rgba(251,245,236,0), rgba(251,245,236,.7) 60%, rgba(251,245,236,.92)); }
-
-  #title { position: fixed; top: calc(14px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
-    font-family: "Noto Serif TC", serif; font-weight: 900; font-size: 18px; letter-spacing: .3em; padding: 7px 10px 7px 18px;
-    color: #ffe2a3; background: linear-gradient(#b8352d, #8e231f); border: 2px solid var(--gold); border-radius: 6px;
-    box-shadow: 0 4px 14px rgba(120,40,20,.25); pointer-events: none; white-space: nowrap; }
-
-  #hint { position: fixed; top: calc(62px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
-    font-size: 12px; color: rgba(74,42,30,.7); background: rgba(255,250,242,.7); padding: 4px 12px; border-radius: 99px;
-    pointer-events: none; transition: opacity .6s; white-space: nowrap; }
-
-  /* 小和尚的對話泡泡 */
-  #bubble { position: fixed; left: 0; top: 0; width: max-content; max-width: min(78vw, 300px); padding: 12px 16px; border-radius: 18px;
-    background: var(--bubble); border: 2px solid #e2c48d; box-shadow: 0 6px 18px rgba(110,50,20,.18);
-    font-size: 16px; line-height: 1.55; font-weight: 500; transform: translate(-50%, -100%); opacity: 0;
-    transition: opacity .4s; pointer-events: none; will-change: left, top; }
-  #bubble.show { opacity: 1; }
-  #bubble::after { content: ""; position: absolute; left: var(--tail, 50%); bottom: -11px; width: 18px; height: 18px;
-    background: var(--bubble); border-right: 2px solid #e2c48d; border-bottom: 2px solid #e2c48d; transform: translateX(-50%) rotate(45deg); }
-  #bubble .who { display: block; font-size: 12px; color: #b07a3a; font-weight: 700; margin-bottom: 2px; letter-spacing: .1em; }
-
-  /* 輸入列 */
-  #ask { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%);
-    width: min(calc(100vw - 32px), 520px); display: flex; gap: 8px; padding: 8px; border-radius: 22px;
-    background: rgba(255,250,242,.94); border: 1.5px solid #e6cfa3; box-shadow: 0 8px 26px rgba(110,50,20,.16);
-    opacity: 0; transform: translate(-50%, 12px); transition: opacity .5s, transform .5s; pointer-events: none; }
-  #ask.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
-  #ask textarea { flex: 1; border: 0; background: transparent; resize: none; font: inherit; font-size: 16px; line-height: 1.45;
-    color: var(--ink); padding: 8px 10px; height: 44px; max-height: 120px; outline: none; }
-  #ask textarea::placeholder { color: #b49a85; }
-  #ask button { flex: none; border: 0; border-radius: 16px; padding: 0 18px; font: inherit; font-weight: 700; font-size: 15px;
-    color: #fff4dc; background: linear-gradient(#c23c30, #9a2722); cursor: pointer; letter-spacing: .15em; }
-  #ask button:disabled { opacity: .45; cursor: default; }
-
-  @media (min-width: 768px) and (min-aspect-ratio: 1/1) {
-    #title { left: 28px; transform: none; }
-    #hint { left: 28px; transform: none; }
-  }
-  #merit { position: fixed; top: calc(14px + env(safe-area-inset-top)); right: 16px; padding: 6px 12px; border-radius: 99px;
-    background: rgba(255,250,242,.9); border: 1.5px solid #e6cfa3; font-size: 13px; font-weight: 700; color: #8a4a22;
-    box-shadow: 0 4px 12px rgba(110,50,20,.12); pointer-events: none; transition: transform .15s; }
-  #merit b { font-size: 15px; color: var(--red); margin-left: 4px; }
-  #merit.bump { transform: scale(1.15); }
-  @media (max-width: 420px) { #title { left: 16px; transform: none; } #hint { left: 16px; transform: none; } }
-  #bubble .title { display: block; font-size: 12px; color: #b07a3a; font-weight: 700; margin-bottom: 4px; }
-  #bubble .line { font-size: 21px; font-weight: 700; letter-spacing: .04em; }
-  #bubble .line .on { color: var(--ink); }
-  #bubble .line .off { color: #d8c2a8; }
-  #bubble .next { display: block; margin-top: 4px; font-size: 13px; color: #c3a888; }
-  #bubble.rap { border-color: #e0a84a; }
-  .plus { position: fixed; font-weight: 900; font-size: 18px; color: #c0392b; pointer-events: none; white-space: nowrap;
-    text-shadow: 0 2px 0 #fff4dc; animation: plus 1s ease-out forwards; }
-  @keyframes plus { from { opacity: 1; transform: translate(-50%, 0) scale(.8); } 20% { transform: translate(-50%, -14px) scale(1.15); } to { opacity: 0; transform: translate(-50%, -70px) scale(1); } }
-  #voice { position: fixed; top: calc(52px + env(safe-area-inset-top)); right: 16px; border: 1.5px solid #e6cfa3; border-radius: 99px;
-    background: rgba(255,250,242,.9); color: #8a4a22; font: inherit; font-size: 12px; font-weight: 700; padding: 4px 10px; cursor: pointer; }
-  #voice.off { color: #b49a85; }
-
-  /* 敲木魚進度 */
-  #knock { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
-    width: min(calc(100vw - 32px), 360px); display: grid; justify-items: center; gap: 10px; transition: opacity .4s, transform .4s; }
-  #knock.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
-  .knock-top { width: 100%; display: flex; justify-content: space-between; font-size: 14px; font-weight: 700; color: #8a4a22; }
-  .knock-top b { color: var(--red); font-size: 16px; }
-  .knock-track { width: 100%; height: 12px; border-radius: 99px; background: rgba(255,250,242,.9); border: 1.5px solid #e6cfa3; overflow: hidden; }
-  #knockBar { height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, #e9b452, #c0392b); transition: width .15s; }
-  #knockBtn { width: 92px; height: 92px; border-radius: 50%; border: 3px solid #f1c062; cursor: pointer; touch-action: manipulation;
-    background: radial-gradient(circle at 35% 30%, #d9773e, #9c3b16 70%); color: #fff2d6; font-family: "Noto Serif TC", serif; font-size: 30px; font-weight: 900;
-    box-shadow: 0 8px 0 #6e2810, 0 12px 24px rgba(110,40,16,.35); transition: transform .06s, box-shadow .06s; }
-  #knockBtn:active { transform: translateY(6px); box-shadow: 0 2px 0 #6e2810, 0 4px 10px rgba(110,40,16,.3); }
-
-  /* 功德圓滿 */
-  #complete { position: fixed; inset: 0; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-    padding: calc(28px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom)); gap: 14px; overflow-y: auto;
-    background: rgba(60,20,10,.55); opacity: 0; pointer-events: none; transition: opacity .6s; }
-  #complete.show { opacity: 1; pointer-events: auto; }
-  #complete .glow { position: fixed; inset: -20%; background: radial-gradient(circle at 50% 30%, rgba(255,214,120,.75), rgba(255,180,80,.15) 40%, transparent 65%);
-    pointer-events: none; animation: glow 3s ease-in-out infinite alternate; }
-  @keyframes glow { from { opacity: .7; transform: scale(1); } to { opacity: 1; transform: scale(1.06); } }
-  .done-title { position: relative; font-family: "Noto Serif TC", serif; font-weight: 900; font-size: clamp(44px, 12vw, 76px); letter-spacing: .2em; padding-left: .2em;
-    color: #ffe39a; text-shadow: 0 0 24px rgba(255,190,80,.9), 0 4px 0 #9a2420; transform: scale(.6); opacity: 0; flex: none; }
-  #complete.show .done-title { animation: pop .9s cubic-bezier(.2,1.6,.4,1) forwards; }
-  @keyframes pop { to { transform: scale(1); opacity: 1; } }
-  .printer { position: relative; width: min(100%, 340px); flex: none; }
-  .slot { height: 18px; border-radius: 9px; background: linear-gradient(#3a2a24, #1d1411); box-shadow: inset 0 3px 6px rgba(0,0,0,.6), 0 2px 0 #6b4a3a; }
-  .paper-clip { margin: -8px 14px 0; overflow: hidden; height: 0; transition: height 2.6s steps(26); }
-  #complete.printing .paper-clip { height: var(--paper-h, 640px); }
-  #receiptPaper canvas { display: block; width: 100%; height: auto; box-shadow: 0 10px 20px rgba(0,0,0,.25); }
-  .done-actions { position: relative; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; flex: none; opacity: 0; transition: opacity .5s 2.4s; }
-  #complete.printing .done-actions { opacity: 1; }
-  .done-actions button { border: 1.5px solid #e6cfa3; border-radius: 99px; padding: 10px 16px; font: inherit; font-size: 14px; font-weight: 700;
-    background: #fffaf2; color: #8a4a22; cursor: pointer; }
-  .done-actions button.primary { background: linear-gradient(#c23c30, #9a2722); color: #fff4dc; border-color: #9a2722; }
-  #printImg { display: none; }
-  @media print {
-    body > * { display: none !important; }
-    #printImg { display: block !important; width: 80mm; margin: 0 auto; }
-    html, body { background: #fff; overflow: visible; height: auto; }
-  }
-  #loading { position: fixed; inset: 0; display: grid; place-items: center; background: var(--cream);
-    font-family: "Noto Serif TC", serif; font-size: 18px; letter-spacing: .3em; color: var(--red); transition: opacity .6s; z-index: 10; }
-
-  /* ===== 前段：公司 → 靈魂出竅 rap → 飛進小和尚 ===== */
-  body.office-on #title, body.office-on #hint, body.office-on #merit, body.office-on #fade { opacity: 0; }
-  #fade { transition: opacity .6s; }
-  #title, #merit { transition: opacity .6s; }
-  #office { position: fixed; inset: 0; overflow: hidden; pointer-events: none; transition: opacity .5s; }
-  #office.gone { opacity: 0; pointer-events: none; }
-  #office .office-bg { position: absolute; inset: -40px; background: url(assets/office/office.webp) center / cover; filter: blur(22px) saturate(.9) brightness(.85); }
-  #office .frame { position: absolute; left: 50%; top: 50%; height: 100%; aspect-ratio: 538 / 752; transform: translate(-50%, -50%); }
-  #office .frame > img { display: block; width: 100%; height: 100%; object-fit: cover; }
-  #office.shake .frame { animation: shake .5s; }
-  @keyframes shake { 0%,100% { transform: translate(-50%, -50%); } 20% { transform: translate(calc(-50% - 8px), calc(-50% + 3px)); } 40% { transform: translate(calc(-50% + 7px), calc(-50% - 4px)); } 60% { transform: translate(calc(-50% - 5px), calc(-50% + 2px)); } 80% { transform: translate(calc(-50% + 3px), -50%); } }
-  /* 電腦螢幕上的對話視窗：位置對齊圖裡的螢幕 */
-  #office .screen { position: absolute; left: 26.4%; top: 38.6%; width: 47.6%; height: 19.2%; padding: 6% 5% 4%; overflow: hidden;
-    background: rgba(250,253,250,.94); border-radius: 3px; font-size: clamp(11px, 1.9vh, 16px); line-height: 1.45; color: #23313a; }
-  #office .screen .bar { position: absolute; left: 0; right: 0; top: 0; height: 15%; background: #d9ead9; display: flex; align-items: center; padding: 0 5%;
-    font-size: .72em; font-weight: 700; color: #4d6b55; letter-spacing: .05em; }
-  #screenText { white-space: pre-wrap; word-break: break-all; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
-  #screenText.empty { color: #8fa39a; }
-  #screenText::after { content: "▍"; color: #2f7d4f; animation: caret 1s steps(1) infinite; }
-  @keyframes caret { 50% { opacity: 0; } }
-  #office .tint { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 1.2s;
-    background: radial-gradient(ellipse at 50% 30%, rgba(90,170,255,.18), rgba(10,25,60,.5) 75%); }
-  #office.soul .tint { opacity: 1; }
-  /* 靈魂：黑底圖片用 screen 疊加，黑色會變透明、只剩發光的身體 */
-  #soulWrap { position: absolute; left: 50%; top: 80%; height: min(40vh, 400px); aspect-ratio: 896 / 1200; mix-blend-mode: screen; pointer-events: none;
-    transform: translate(-50%, 0) scale(.25); opacity: 0; transition: top 1.8s cubic-bezier(.2,.8,.3,1), transform 1.8s cubic-bezier(.2,.8,.3,1), opacity 1s; }
-  #office.soul #soulWrap { top: calc(9% + env(safe-area-inset-top)); transform: translate(-50%, 0) scale(1); opacity: 1; }
-  #office.exit #soulWrap { top: -70%; transform: translate(-50%, 0) scale(.55); opacity: .2; transition: top .9s cubic-bezier(.5,0,.8,.4), transform .9s, opacity .9s; }
-  #soul { display: block; width: 100%; height: 100%; animation: soulFloat 3.2s ease-in-out infinite; }
-  @keyframes soulFloat { 0%,100% { translate: 0 0; } 50% { translate: 0 -10px; } }
-  /* 辦公室的按鈕、提示、同事說話 */
-  #officeUI { position: fixed; top: calc(14px + env(safe-area-inset-top)); left: 16px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
-  body:not(.office-on) #officeUI, body:not(.office-on) #talk { display: none; }
-  #standBtn { border: 1.5px solid #e6cfa3; border-radius: 99px; background: rgba(255,250,242,.94); color: #8a4a22; font: inherit; font-size: 14px; font-weight: 700;
-    padding: 8px 16px; cursor: pointer; box-shadow: 0 4px 12px rgba(40,60,40,.15); }
-  #standBtn[hidden] { display: none; }
-  #walkHint { font-size: 12px; color: #3f5a46; background: rgba(255,255,255,.82); padding: 5px 12px; border-radius: 99px; max-width: calc(100vw - 32px); line-height: 1.5; }
-  #walkHint:empty { display: none; }
-  #talk { position: fixed; left: 0; top: 0; transform: translate(-50%, -100%); max-width: 210px; width: max-content; padding: 8px 12px; border-radius: 14px;
-    background: #fffdf8; border: 2px solid #b8c9b0; font-size: 14px; font-weight: 700; color: #33463a; line-height: 1.45; pointer-events: none;
-    opacity: 0; transition: opacity .25s; box-shadow: 0 6px 16px rgba(30,50,30,.18); }
-  #talk.show { opacity: 1; }
-  #talk::after { content: ""; position: absolute; left: 50%; bottom: -9px; width: 14px; height: 14px; background: #fffdf8;
-    border-right: 2px solid #b8c9b0; border-bottom: 2px solid #b8c9b0; transform: translateX(-50%) rotate(45deg); }
-  #flash { position: fixed; inset: 0; background: #fffdf6; opacity: 0; pointer-events: none; transition: opacity .45s; }
-  #flash.on { opacity: 1; }
-  /* rap 字幕：在公司時固定在畫面下方 */
-  #bubble.office::after { border-right-color: #8cc7ff; border-bottom-color: #8cc7ff; }
-  #bubble.office { border-color: #8cc7ff; box-shadow: 0 0 0 4px rgba(140,199,255,.25), 0 8px 26px rgba(10,30,70,.35); }
-  #bubble.office .who { color: #3f86c9; }
-</style>
-<script type="importmap">
-{ "imports": {
-  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
-} }
-</script>
-</head>
-<body class="office-on">
-<div id="stage"></div>
-<div id="fade"></div>
-<div id="office">
-  <div class="tint"></div>
-  <div id="soulWrap"><img id="soul" src="assets/office/soul_c.jpg" alt="靈魂"></div>
-</div>
-<div id="flash"></div>
-<div id="officeUI"><button id="standBtn" type="button" hidden>起身走走</button><div id="walkHint"></div></div>
-<div id="talk"></div>
-<div id="title">職場功德所</div>
-<div id="hint">單指拖曳環繞・雙指縮放</div>
-<div id="merit">功德<b id="meritN">0</b></div>
-<button id="voice" type="button">人聲 開</button>
-<div id="knock">
-  <div class="knock-top"><span>木魚</span><b><span id="knockN">0</span> / 30</b></div>
-  <div class="knock-track"><div id="knockBar"></div></div>
-  <button id="knockBtn" type="button" aria-label="敲木魚">敲</button>
-</div>
-<div id="complete">
-  <div class="glow"></div>
-  <div class="done-title">功德圓滿</div>
-  <div class="printer"><div class="slot"></div><div class="paper-clip"><div id="receiptPaper"></div></div></div>
-  <div class="done-actions">
-    <button id="saveReceipt" type="button">存成圖片</button>
-    <button id="printReceipt" type="button">列印收據</button>
-    <button id="again" type="button" class="primary">回到大殿</button>
-  </div>
-</div>
-<img id="printImg" alt="功德收據">
-<div id="bubble"><span class="who">小師父</span><span id="say"></span></div>
-<form id="ask" autocomplete="off">
-  <textarea id="q" rows="1" placeholder="說說今天的職場苦水⋯⋯" maxlength="300"></textarea>
-  <button id="send" type="submit" disabled>上香</button>
-</form>
-<div id="loading">上班打卡中⋯</div>
-
-<script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
@@ -1099,7 +878,18 @@ try { merit = Number(localStorage.getItem('merit-temple:merit')) || 0; } catch (
 const meritEl = document.getElementById('meritN'), meritBox = document.getElementById('merit');
 meritEl.textContent = merit;
 
-function localRap() {
+/* ---------- 歌詞來源 ----------
+   'library'：從歌詞庫（js/lyric-library.js）依抱怨挑一首，不花錢、不上傳，是目前的設定
+   'ai'：交給 /api/rap 現編（worker.js），連不上時改用歌詞庫
+   要不要打開 AI 由組員討論決定，不要自行切換 */
+const LYRIC_SOURCE = 'library';
+
+function localRap(complaint = '') {
+  // 歌詞庫：沒有選情境，所以在整個歌詞庫裡依抱怨的關鍵字配對
+  if (typeof buildLyrics === 'function') {
+    const pick = buildLyrics({ id: 'other' }, complaint);
+    if (pick.verse) return { title: pick.verse.title, lines: pick.lines, blessing: '善哉善哉，施主今天辛苦了。' };
+  }
   return {
     title: '職場心經 Remix',
     lines: ['施主苦水我收到', '木魚一敲煩惱跑', '老闆畫餅別亂咬', '會議開完還要報', 'KPI 像業障在繞', '薪水入帳就飄飄', '放下手機睡個好覺', '明天的你依舊最好'],
@@ -1107,14 +897,15 @@ function localRap() {
   };
 }
 async function fetchRap(complaint) {
+  if (LYRIC_SOURCE !== 'ai') return localRap(complaint);
   const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 25000);
   try {
     const r = await fetch('/api/rap', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ complaint }), signal: ctl.signal });
     if (!r.ok) throw new Error(r.status);
     return await r.json();
   } catch (e) {
-    console.info('改用備用歌詞：', e.message);
-    return localRap();
+    console.info('改用歌詞庫：', e.message);
+    return localRap(complaint);
   } finally { clearTimeout(timer); }
 }
 
@@ -1278,7 +1069,7 @@ function wrapText(g, text, maxW) {
 }
 function drawReceipt() {
   const W = 600, pad = 44, inner = W - pad * 2, now = taipeiNow();
-  const rap = show.rap || localRap();
+  const rap = show.rap || localRap(show.complaint);
   const no = `${now.id}-${String(Math.floor(Math.random() * 9000) + 1000)}`;
   const c = document.createElement('canvas'), g = c.getContext('2d');
   const SANS = '"Noto Sans TC", "PingFang TC", sans-serif';
@@ -2564,6 +2355,3 @@ async function start() {
   setTimeout(() => { hint.style.opacity = 0; }, 7000);
 }
 start();
-</script>
-</body>
-</html>

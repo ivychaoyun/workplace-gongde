@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>職場功德所</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/main.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+</head>
+<body class="office-on">
+<div id="stage"></div>
+<div id="fade"></div>
+<div id="office">
+  <div class="tint"></div>
+  <div id="soulWrap"><img id="soul" src="assets/office/soul_c.jpg" alt="靈魂"></div>
+</div>
+<div id="flash"></div>
+<div id="officeUI"><button id="standBtn" type="button" hidden>起身走走</button><div id="walkHint"></div></div>
+<div id="talk"></div>
+<div id="title">職場功德所</div>
+<div id="hint">單指拖曳環繞・雙指縮放</div>
+<div id="merit">功德<b id="meritN">0</b></div>
+<button id="voice" type="button">人聲 開</button>
+<div id="knock">
+  <div class="knock-top"><span>木魚</span><b><span id="knockN">0</span> / 30</b></div>
+  <div class="knock-track"><div id="knockBar"></div></div>
+  <button id="knockBtn" type="button" aria-label="敲木魚">敲</button>
+</div>
+<div id="complete">
+  <div class="glow"></div>
+  <div class="done-title">功德圓滿</div>
+  <div class="printer"><div class="slot"></div><div class="paper-clip"><div id="receiptPaper"></div></div></div>
+  <div class="done-actions">
+    <button id="saveReceipt" type="button">存成圖片</button>
+    <button id="printReceipt" type="button">列印收據</button>
+    <button id="again" type="button" class="primary">回到大殿</button>
+  </div>
+</div>
+<img id="printImg" alt="功德收據">
+<div id="bubble"><span class="who">小師父</span><span id="say"></span></div>
+<form id="ask" autocomplete="off">
+  <textarea id="q" rows="1" placeholder="說說今天的職場苦水⋯⋯" maxlength="300"></textarea>
+  <button id="send" type="submit" disabled>上香</button>
+</form>
+<div id="loading">上班打卡中⋯</div>
+
+<script src="js/lyric-library.js"></script>
+<script src="js/lyrics.js"></script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
