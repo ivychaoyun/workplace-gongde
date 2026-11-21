@@ -6,6 +6,7 @@ import { SERIF, a0Dist, altarLight, camera, controls, renderer } from './core.js
 import { W, anim } from './temple-scene.js';
 import { SPB, audio, beatPos, bowl, ensureAudio, noise, sing, startBeat, stopBeat, synth, voice, woodfish } from './audio.js';
 import { OFF, ocam, office, soulExit, soulTick } from './office.js';
+import { walkTick } from './temple-walk.js';
 
 /* ---------- 動畫 ---------- */
 const ease = x => x * x * (3 - 2 * x);
@@ -458,12 +459,13 @@ function stageTick(t) {
     c.root.rotation.y = 0.06;
     monkPray(c);
   }
+  if (!office.active) walkTick(t, c);
   lyricTick();
 }
 
 askForm.addEventListener('submit', e => {
   e.preventDefault();
-  const text = q.value.trim(); if (!text || !['idle', 'done'].includes(show.mode)) return;
+  const text = q.value.trim(); if (!text || !['idle', 'done', 'roam'].includes(show.mode)) return;
   q.value = ''; sendBtn.disabled = true; q.style.height = '44px'; q.blur();
   perform(text);
 });

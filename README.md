@@ -47,7 +47,15 @@ workplace-gongde/
 ├── public/                    # 網站本身（部署時整個資料夾就是網站）
 │   ├── index.html             # 頁面骨架
 │   ├── css/main.css           # 樣式
-│   ├── js/main.js             # 3D 場景與整個流程（three.js）
+│   ├── js/main.js             # 入口：開場、主迴圈
+│   ├── js/core.js             # 共用：畫布、相機、材質小工具、光線
+│   ├── js/ui.js               # 共用：對話泡泡、輸入框、表演狀態
+│   ├── js/office.js           # 辦公室、靈魂出竅、飛進小和尚
+│   ├── js/temple-scene.js     # 寺廟建築與香煙
+│   ├── js/characters.js       # Q 版人物、小和尚、信眾
+│   ├── js/temple.js           # 寺廟流程：rap 表演、敲木魚、功德單
+│   ├── js/temple-walk.js      # 小和尚在寺廟裡用鍵盤走動
+│   ├── js/audio.js            # 節拍、木魚聲、小師父人聲
 │   ├── js/lyric-library.js    # 歌詞庫（50 首）
 │   ├── js/lyrics.js           # 依抱怨從歌詞庫配對
 │   ├── js/content.js          # 情境文案

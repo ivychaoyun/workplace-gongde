@@ -15,7 +15,8 @@
 ## 技術
 
 - 網站在 `public/`：HTML、CSS、原生 JavaScript，3D 用 **three.js**（`public/index.html` 的 importmap 從 jsDelivr 載入固定版本 0.170.0）。**沒有建置工具**，不要引入 React、Tailwind、打包工具，除非組員要求。
-- `public/js/main.js` 是 ES module；`lyric-library.js`、`lyrics.js` 是一般 `<script>`，在 main.js 之前載入，透過全域的 `LYRIC_LIBRARY`、`buildLyrics()` 使用。
+- 3D 程式是 ES module，入口是 `public/js/main.js`，依負責人拆成幾個檔案（見下方檔案地圖），彼此用 `import`／`export` 共用。`lyric-library.js`、`lyrics.js` 是一般 `<script>`，在 main.js 之前載入，透過全域的 `LYRIC_LIBRARY`、`buildLyrics()` 使用。
+- 拆檔的規則：跨檔案共用的狀態不要在別的檔案直接重新賦值（ES module 不允許），要用函式包起來，例如 `temple.js` 的 `setMonk()`。`ui.js` 只放 DOM 參照與 `show` 狀態、不 import 任何檔案，讓其他檔案在載入時就能安全使用。
 - 後端只有一個：`worker.js`（Cloudflare Worker，線上版）與 `server.mjs`（本機版）共用 `rap.js` 的作詞規則。只有負責部署的人需要 npm。
 - **資料原則：不涉及資安的內容可以上傳。** 抱怨可以送到本專案的 `/api/rap` 寫成歌詞，但：
   - 服務端**不可記錄、不可儲存**抱怨內容（不寫 log、不存資料庫）。
@@ -37,7 +38,7 @@ npm start                                        # 連同 AI 歌詞服務（需�
 ## 歌詞來源（重要）
 
 - 預設從歌詞庫 `public/js/lyric-library.js` 依抱怨配對（`public/js/lyrics.js`）。
-- **AI 現編功能目前關閉，不要刪除。** 由 `public/js/main.js` 的 `LYRIC_SOURCE` 切換：`'library'` 是目前設定，`'ai'` 會呼叫 `/api/rap`，連不上時改用歌詞庫。要不要打開由組員討論決定，不要自行切換。
+- **AI 現編功能目前關閉，不要刪除。** 由 `public/js/temple.js` 的 `LYRIC_SOURCE` 切換：`'library'` 是目前設定，`'ai'` 會呼叫 `/api/rap`，連不上時改用歌詞庫。要不要打開由組員討論決定，不要自行切換。
 
 ## 檔案地圖
 
@@ -45,7 +46,15 @@ npm start                                        # 連同 AI 歌詞服務（需�
 | --- | --- | --- |
 | `public/index.html` | 頁面骨架、importmap | 趙芸 `chaoyun` |
 | `public/css/main.css` | 樣式 | 趙芸 `chaoyun` |
-| `public/js/main.js` | 3D 場景與整個流程。依區塊註解分工：辦公室、出竅（欣亞）／寺廟、木魚、功德單（安淇）／節拍、人聲（姵宣）／流程串接（趙芸） | 共用，之後會拆檔 |
+| `public/js/main.js` | 入口：開場、建場景、主迴圈 | 趙芸 `chaoyun` |
+| `public/js/core.js` | 畫布、相機、鏡頭控制、材質小工具、光線 | 趙芸 `chaoyun` |
+| `public/js/ui.js` | 對話泡泡、輸入框、表演狀態 `show`（不 import 任何檔案） | 趙芸 `chaoyun` |
+| `public/js/office.js` | 辦公室場景、走路、同事、鏡頭、靈魂出竅、飛進小和尚 | 欣亞 `cynthia` |
+| `public/js/temple-scene.js` | 寺廟建築、佛像、蒲團、燈籠、香煙 | 安淇 `foraianother8-ann` |
+| `public/js/characters.js` | `chibi()` 共用人偶、小和尚、信眾 | 安淇 `foraianother8-ann`（辦公室角色與欣亞協調） |
+| `public/js/temple.js` | 寺廟流程：對話、等歌詞 → rap → 跪下敲木魚 → 功德單；歌詞來源 `LYRIC_SOURCE` | 安淇 `foraianother8-ann`（歌詞來源與姵宣協調） |
+| `public/js/temple-walk.js` | 小和尚在寺廟裡用鍵盤走動（`show.mode` 的 `'roam'`） | 安淇 `foraianother8-ann` |
+| `public/js/audio.js` | Web Audio 節拍、木魚聲、磬、小師父人聲 | 姵宣 `peixuan` |
 | `public/js/lyric-library.js` | 歌詞庫，格式見 `docs/歌詞庫製作指南.md` | 姵宣 `peixuan` |
 | `public/js/lyrics.js` | 依抱怨從歌詞庫配對：`buildLyrics()`、`rankLyrics()` | 姵宣 `peixuan` |
 | `public/js/content.js` | 情境文案（目前只有工具頁在用） | 欣亞 `cynthia` |
@@ -58,7 +67,7 @@ npm start                                        # 連同 AI 歌詞服務（需�
 ## 修改規則
 
 - **分工是「主要負責」，不是限制。** 組員可以多做、改別人負責的檔案，但改動盡量小，並在回覆中明確告知使用者改了誰負責的檔案，請他在 PR 裡標註該負責人。
-- `public/js/main.js` 還是一個大檔案，多人同時改容易衝突：改之前先在群組說一聲，改動盡量只在自己負責的區塊裡。
+- 盡量只改自己負責的檔案；`office.js`、`temple.js` 會互相 import，改到對方用的函式名稱或參數時，先在 PR 裡標註對方。
 - 沿用現有風格：2 空格縮排、`const`、少量中文註解；`main.js` 用單引號，歌詞庫與配對用雙引號，跟著各檔案原本的寫法。
 - 介面文字一律用**繁體中文（台灣用語）**。
 
