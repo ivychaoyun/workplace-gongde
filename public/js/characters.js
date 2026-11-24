@@ -172,8 +172,9 @@ function buildMonk() {
   // 跪墊
   const cushion = mesh(lathe([[0, 0], [0.48, 0], [0.54, 0.05], [0.55, 0.1], [0.52, 0.16], [0.42, 0.2], [0, 0.21]], 28), mat('#c94a3c', { roughness: 0.85 }), scene);
   cushion.visible = false; c.cushion = cushion;
-  c.root.position.set(-0.25, 0, 4.6);
-  cushion.position.set(-0.25, 0, 4.55);
+  // 出生點在修行區正前方（temple-spots.js），四個互動點都在旁邊
+  c.root.position.set(0.2, 0, 3.6);
+  cushion.position.set(0.2, 0, 3.55);
   c.root.scale.setScalar(1.15);
   c.root.rotation.y = 0.06;
   scene.add(c.root);
@@ -195,7 +196,7 @@ function buildPeople() {
   pray(s1); s1.root.position.set(-5.0, 0.2, -2.0); s1.root.rotation.y = toAltar + 0.15; scene.add(s1.root);
   P.push({ c: s1, kind: 'shake', ph: 0.4 });
   const s2 = chibi({ skin: '#f1cdb2', top: '#e9e3d7', pants: '#59616e', eyes: 'closed', hair: '#6f7176' });
-  pray(s2); s2.root.position.set(-3.7, 0.2, -0.2); s2.root.rotation.y = toAltar + 0.1; scene.add(s2.root);
+  pray(s2); s2.root.position.set(-5.0, 0.2, -0.2); // 讓出山門的位置 s2.root.rotation.y = toAltar + 0.1; scene.add(s2.root);
   P.push({ c: s2, kind: 'shake', ph: 2.2 });
   // 鞠躬的上班族（畫面右邊後方）
   const s3 = chibi({ skin: '#f6d3ba', top: '#6f8fb3', pants: '#33384a', eyes: 'closed', hair: '#2b2120', bun: true });
@@ -204,11 +205,11 @@ function buildPeople() {
   const s4 = chibi({ skin: '#f3cfb4', top: '#d9c7a4', pants: '#4b4038', eyes: 'closed', hair: '#2e2420' });
   pray(s4); s4.root.position.set(3.7, 0.2, -0.2); s4.root.rotation.y = toAltar - 0.1; scene.add(s4.root);
   P.push({ c: s4, kind: 'shake', ph: 1.1 });
-  // 在殿裡繞行的香客
+  // 在殿裡繞行的香客：只走大殿後半圈，不會穿過前面的修行區（temple-spots.js）
   const w1 = chibi({ skin: '#f5d1b6', top: '#e0895b', pants: '#2f3b55', eyes: 'open', hair: '#2a201c' });
-  scene.add(w1.root); P.push({ c: w1, kind: 'walk', ph: 0, rx: 6.85, rz: 3.0, cz: -0.25, speed: 0.16 });
+  scene.add(w1.root); P.push({ c: w1, kind: 'walk', ph: 0, rx: 6.6, rz: 1.5, cz: -2.4, speed: 0.16 });
   const w2 = chibi({ skin: '#f2cdb0', top: '#7fae8a', pants: '#4a4a52', eyes: 'open' });
-  scene.add(w2.root); P.push({ c: w2, kind: 'walk', ph: Math.PI, rx: 6.85, rz: 3.0, cz: -0.25, speed: 0.16 });
+  scene.add(w2.root); P.push({ c: w2, kind: 'walk', ph: Math.PI, rx: 6.6, rz: 1.5, cz: -2.4, speed: 0.16 });
   anim.people = P;
 }
 

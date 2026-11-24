@@ -1,4 +1,6 @@
-// 寺廟的流程：動畫、對話、等歌詞 → rap → 跪下敲木魚 → 功德單。
+// 寺廟的流程：動畫、對話、等歌詞 → rap → 落地字卡 → 自由探索四個互動點 → 走到山門領功德單。
+// show.mode：'land' 落地字卡、'roam' 自由走動、'spot' 開著心經或抽籤、'toSit'／'sit' 走去蒲團／靜坐、
+//            'toFish'／'knock' 走去木魚／跪著敲、'complete' 功德單
 // 主要負責：安淇（foraianother8-ann）；歌詞來源（LYRIC_SOURCE、localRap）與姵宣協調
 import * as THREE from 'three';
 import { askForm, bubble, q, sayEl, sendBtn, show } from './ui.js';
@@ -6,7 +8,9 @@ import { SERIF, a0Dist, altarLight, camera, controls, renderer } from './core.js
 import { W, anim } from './temple-scene.js';
 import { SPB, audio, beatPos, bowl, ensureAudio, noise, sing, startBeat, stopBeat, synth, voice, woodfish } from './audio.js';
 import { OFF, ocam, office, soulExit, soulTick } from './office.js';
-import { walkTick } from './temple-walk.js';
+import { walkTick, walkTo } from './temple-walk.js';
+import { FISH_KNEEL, SPOTS, buildSpots, hideCaption, markDone, practiceDone, setFishMarker, setSpotHandler, showCaption, showPractice } from './temple-spots.js';
+import { getLastLot, openLot, openSit, openSutra } from './temple-practice.js';
 
 /* ---------- 動畫 ---------- */
 const ease = x => x * x * (3 - 2 * x);
@@ -60,8 +64,17 @@ function tick(t) {
 
 /* ---------- 對話 ---------- */
 let monk;
-// 小和尚在 main.js 開場時建好，再交給這裡
-function setMonk(m) { monk = m; }
+// 小和尚在 main.js 開場時建好，再交給這裡；互動點的物件也在這時候放進寺廟
+function setMonk(m) {
+  monk = m;
+  buildSpots();
+  setSpotHandler('fish', goKnock);
+  setSpotHandler('sit', goSit);
+  setSpotHandler('sutra', () => { show.mode = 'spot'; openSutra({ onDone: () => markDone('sutra'), onExit: backToRoam }); });
+  // 情境 id 之後由辦公室傳進來（show.scenario）；目前沒有，會抽到通用籤詩
+  setSpotHandler('lot', () => { show.mode = 'spot'; openLot({ scenarioId: show.scenario, onDone: () => markDone('lot'), onExit: backToRoam }); });
+  setSpotHandler('gate', complete);
+}
 let typing = null;
 function say(text, done) {
   clearInterval(typing);
@@ -169,6 +182,7 @@ async function perform(complaint) {
   show.mode = 'waiting'; show.drawn = ''; show.complaint = complaint; voice.sungIdx = -1;
   if (synth && voice.on) { synth.cancel(); synth.speak(new SpeechSynthesisUtterance(' ')); }
   if (controls.target.distanceTo(HOME_T) > 0.5) flyHome();
+  if (!office.active) walkTo();
   startBeat();
   const rap = await fetchRap(complaint);
   if (show.mode !== 'waiting') return;
@@ -176,29 +190,76 @@ async function perform(complaint) {
   show.startBar = Math.floor(Math.max(beatPos(), 0) / 4) + 1;
   show.mode = 'rap';
 }
-/* ---------- 跪下 → 換施主敲 30 下 → 功德圓滿 ---------- */
-const GOAL = 30;
-const knockUI = document.getElementById('knock'), knockN = document.getElementById('knockN'), knockBar = document.getElementById('knockBar');
+/* ---------- 落地 → 自由探索 ---------- */
+// 名稱沿用 kneelDown：office.js 在靈魂飛進小和尚後、以及寺廟裡 rap 唱完時都會呼叫它
+let landTimer = null;
 function kneelDown() {
   if (show.mode !== 'rap') return;
   stopBeat();
   bowl(audio.ctx.currentTime + 0.05);
-  show.mode = 'kneel'; show.drawn = ''; show.count = 0;
-  flyClose();
-  bubble.classList.remove('rap');
-  const blessing = show.rap.blessing || '善哉善哉。';
-  setTimeout(() => {
-    // 小師父先示範三下，不算在施主的 30 下裡
-    let n = 0;
-    const iv = setInterval(() => { strike(false); if (++n >= 3) clearInterval(iv); }, SPB() * 1000);
-    sing(blessing, 0, 0.9);
-    say(blessing, () => setTimeout(() => {
-      show.mode = 'knock';
-      say(`換施主了！敲滿 ${GOAL} 下木魚，功德就圓滿。`);
-      drawKnock();
-      knockUI.classList.add('show');
-    }, 1200));
-  }, 700);
+  show.mode = 'land'; show.drawn = '';
+  clearInterval(typing);
+  bubble.classList.remove('rap', 'show');
+  flyRoam();
+  showCaption('先把自己放在這裡一下。', 2800);
+  landTimer = setTimeout(() => {
+    startRoam();
+    showCaption('想做哪一項都可以。\n準備好了，就從山門離開。', 4200);
+  }, 3000);
+}
+function startRoam() {
+  clearTimeout(landTimer);
+  if (show.mode === 'land') hideCaption();
+  show.mode = 'roam';
+  showPractice(true);
+}
+function backToRoam() { if (show.mode === 'spot') show.mode = 'roam'; }
+
+/* ---------- 靜坐：走到蒲團 → 坐下 → 呼吸三輪 ---------- */
+function goSit() {
+  const [x, z] = SPOTS.find(s => s.id === 'sit').obj;
+  show.mode = 'toSit';
+  walkTo(() => {
+    if (show.mode !== 'toSit') return;
+    show.mode = 'sit';
+    flySit(x, z);
+    openSit({
+      onDone: () => markDone('sit'),
+      onExit: () => { if (show.mode === 'sit') { show.mode = 'roam'; flyRoam(); } },
+    });
+  }, x, z + 0.05);
+}
+
+/* ---------- 木魚：走到木魚前 → 跪下敲 30 下 → 回到自由探索 ---------- */
+const GOAL = 30;
+const knockUI = document.getElementById('knock'), knockN = document.getElementById('knockN'), knockBar = document.getElementById('knockBar');
+show.knocked = 0; // 這次在寺廟裡一共敲了幾下，印在功德單上
+function goKnock() {
+  show.mode = 'toFish';
+  walkTo(() => {
+    if (show.mode !== 'toFish') return;
+    show.mode = 'knock'; show.count = 0; show.drawn = '';
+    setFishMarker(false);
+    flyClose(...FISH_KNEEL);
+    drawKnock();
+    knockUI.classList.add('show');
+    showCaption('按空白鍵或點木魚敲擊・Esc 離開', 2600);
+  }, ...FISH_KNEEL);
+}
+function leaveKnock() {
+  knockUI.classList.remove('show');
+  hideCaption();
+  flyRoam();
+  setTimeout(() => setFishMarker(true), 300);
+  show.mode = 'roam';
+}
+function finishKnock() {
+  show.mode = 'knockDone';
+  markDone('fish');
+  knockUI.classList.remove('show');
+  bowl(audio.ctx.currentTime);
+  showCaption('木魚敲滿了。起來走走吧。', 2400);
+  setTimeout(() => { if (show.mode === 'knockDone') leaveKnock(); }, 2400);
 }
 function drawKnock() {
   knockN.textContent = show.count;
@@ -219,26 +280,29 @@ function strike(counted = true) {
   plus.style.top = ((-p.y * 0.5 + 0.5) * innerHeight) + 'px';
   document.body.append(plus); setTimeout(() => plus.remove(), 1000);
   if (show.mode === 'knock') {
-    show.count++; drawKnock();
-    if (show.count === 10) say('善哉，再接再厲。');
-    if (show.count === 20) say('業障正在消散中⋯⋯');
-    if (show.count >= GOAL) complete();
+    show.count++; show.knocked++; drawKnock();
+    if (show.count >= GOAL) finishKnock();
   }
 }
-function knockTap() { if (show.mode === 'knock' || show.mode === 'done') strike(true); }
+function knockTap() { if (show.mode === 'knock') strike(true); }
 document.getElementById('knockBtn').addEventListener('click', knockTap);
-addEventListener('keydown', e => { if (e.code === 'Space' && document.activeElement !== q && (show.mode === 'knock' || show.mode === 'done')) { e.preventDefault(); knockTap(); } });
+addEventListener('keydown', e => {
+  if (document.activeElement === q) return;
+  if (e.code === 'Space' && show.mode === 'knock') { e.preventDefault(); knockTap(); }
+  else if (e.code === 'Escape' && show.mode === 'knock') { e.preventDefault(); leaveKnock(); }
+  else if (e.code === 'Escape' && show.mode === 'land') { e.preventDefault(); startRoam(); }
+});
 
 /* ---------- 功德圓滿與收據 ---------- */
 const doneUI = document.getElementById('complete'), receiptBox = document.getElementById('receiptPaper');
 let receiptCanvas = null;
+// 走到山門按 E：印出功德單
 function complete() {
   show.mode = 'complete';
+  showPractice(false);
   knockUI.classList.remove('show');
   bowl(audio.ctx.currentTime);
   setTimeout(() => bowl(audio.ctx.currentTime), 900);
-  say('功德圓滿，阿彌陀佛。');
-  sing('功德圓滿，阿彌陀佛', 0, 0.9);
   receiptCanvas = drawReceipt();
   receiptBox.replaceChildren(receiptCanvas);
   const clip = receiptBox.parentElement;
@@ -294,10 +358,14 @@ function drawReceipt() {
     y += 8; dash();
     row('品項', '數量', 20, 700);
     row(`rap 開示〈${rap.title}〉`, '× 1', 24);
-    row('小師父示範木魚', '× 3', 24);
-    row('施主親手敲木魚', `× ${GOAL}`, 24);
+    row('親手敲木魚', `× ${show.knocked}`, 24);
     dash();
-    row('本次功德', `+${GOAL}`, 32, 900);
+    text('今日修行', 20, { weight: 700, color: '#6b5546' });
+    text(practiceDone().join('・') || '先來走走，也算數', 24);
+    const lot = getLastLot();
+    if (lot) { y += 8; text('籤詩', 20, { weight: 700, color: '#6b5546' }); text(lot.lines[0], 24); }
+    y += 8; dash();
+    row('本次功德', `+${show.knocked}`, 32, 900);
     row('累積功德', String(merit), 24, 700);
     dash();
     text('小師父開示', 20, { weight: 700, color: '#6b5546' });
@@ -339,12 +407,11 @@ document.getElementById('printReceipt').addEventListener('click', () => {
   document.getElementById('printImg').src = receiptCanvas.toDataURL('image/png');
   setTimeout(() => print(), 100);
 });
+// 「回到大殿」：收起功德單，繼續在寺廟裡走
 document.getElementById('again').addEventListener('click', () => {
   doneUI.classList.remove('show', 'printing');
-  show.mode = 'done';
-  say('還有苦水，隨時再來。也可以繼續敲木魚喔。');
-  q.placeholder = '還有苦水？再說一次⋯⋯';
-  askForm.classList.add('show');
+  startRoam();
+  flyRoam();
 });
 
 // 點木魚：只算「點一下」，拖曳旋轉不算
@@ -352,7 +419,7 @@ const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 let downAt = null;
 renderer.domElement.addEventListener('pointerdown', e => { downAt = { x: e.clientX, y: e.clientY, t: performance.now() }; });
 renderer.domElement.addEventListener('pointerup', e => {
-  if (!downAt || (show.mode !== 'done' && show.mode !== 'knock')) return;
+  if (!downAt || show.mode !== 'knock') return;
   const moved = Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y), dt = performance.now() - downAt.t;
   downAt = null;
   if (moved > 8 || dt > 500) return;
@@ -374,9 +441,24 @@ function flyHome() {
   const s = new THREE.Spherical(a0Dist(), THREE.MathUtils.degToRad(portrait ? 84 : 86.5), THREE.MathUtils.degToRad(4));
   flyTo(HOME_T.clone().add(new THREE.Vector3().setFromSpherical(s)), HOME_T);
 }
-function flyClose() {
+// 寺廟自由探索的鏡頭：從斜上方看整個修行區（四個互動點），畫面越窄就退得越遠
+const ROAM_T = new THREE.Vector3(-0.6, 0.7, 2.2);
+function roamView() {
+  const aspect = innerWidth / innerHeight;
+  const dist = THREE.MathUtils.clamp(3.7 / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * aspect), 8, 13.5);
+  const s = new THREE.Spherical(dist, 1.12, 0);
+  return { pos: ROAM_T.clone().add(new THREE.Vector3().setFromSpherical(s)), target: ROAM_T.clone() };
+}
+function flyRoam() { const v = roamView(); flyTo(v.pos, v.target); }
+// 靜坐：鏡頭稍微拉高，小和尚坐在畫面上半部，不會被下方的呼吸畫面蓋住
+function flySit(x, z) {
   const portrait = innerWidth / innerHeight < 0.8;
-  const tgt = new THREE.Vector3(-0.25, portrait ? 0.95 : 1.0, 4.6);
+  const tgt = new THREE.Vector3(x, portrait ? -0.35 : 0.35, z);
+  flyTo(tgt.clone().add(new THREE.Vector3(0.5, portrait ? 2.1 : 1.6, portrait ? 6.2 : 5.2)), tgt);
+}
+function flyClose(x, z) {
+  const portrait = innerWidth / innerHeight < 0.8;
+  const tgt = new THREE.Vector3(x, portrait ? 0.95 : 1.0, z);
   flyTo(tgt.clone().add(new THREE.Vector3(0.7, portrait ? 1.0 : 0.7, portrait ? 4.3 : 4.0)), tgt);
 }
 function flyTick() {
@@ -409,14 +491,15 @@ function stageTick(t) {
   anim.lanternMat && (anim.lanternMat.emissiveIntensity = 0.55 + bounce * 0.45);
   for (const p of anim.people) if (p.kind !== 'walk' && p.kind !== 'kneelBow') p.c.head.rotation.x += bounce * 0.14;
 
-  const kneeling = ['kneel', 'knock', 'complete', 'done'].includes(show.mode);
+  const sitting = show.mode === 'sit';
+  const kneeling = show.mode === 'knock' || show.mode === 'knockDone' || sitting;
   show.kneelK += ((kneeling ? 1 : 0) - show.kneelK) * 0.12;
   const k = show.kneelK;
   c.root.position.y = -0.3 * k;
   for (const l of c.legs) l.visible = k < 0.5;
   c.cushion.visible = k > 0.02; c.cushion.scale.setScalar(Math.max(k, 0.001));
-  c.fish.visible = k > 0.02; c.fish.scale.setScalar(Math.max(easeOut(k), 0.001));
-  c.mallet.visible = k > 0.5;
+  c.fish.visible = k > 0.02 && !sitting; c.fish.scale.setScalar(Math.max(easeOut(k), 0.001));
+  c.mallet.visible = k > 0.5 && !sitting;
   const since = t - show.strikeAt;
   const hit = since < 0.07 ? since / 0.07 : since < 0.35 ? 1 - (since - 0.07) / 0.28 : 0;
   c.fishBody.scale.set(1 + hit * 0.06, 1 - hit * 0.08, 1 + hit * 0.06);
@@ -433,6 +516,15 @@ function stageTick(t) {
     const [up, low] = bar % 2 ? [c.arms[1], c.arms[0]] : [c.arms[0], c.arms[1]];
     up.rotation.set(-1.85 + 0.35 * bounce, 0, (0.95 - 0.15 * bounce) * up.userData.s);
     low.rotation.set(-0.95 - 0.25 * bounce, 0, -0.55 * low.userData.s);
+  } else if (sitting) {
+    // 靜坐：跪坐在蒲團上，雙手合十，頭微微低下
+    c.palms.visible = true;
+    for (const a of c.arms) a.children[1].visible = false;
+    c.hips.position.y = 0.42;
+    c.torso.rotation.set(0.04, 0, 0);
+    c.head.rotation.set(0.16, 0, 0);
+    c.root.rotation.y = 0.06;
+    monkPray(c);
   } else if (kneeling) {
     c.palms.visible = false;
     for (const a of c.arms) a.children[1].visible = true;
@@ -459,13 +551,13 @@ function stageTick(t) {
     c.root.rotation.y = 0.06;
     monkPray(c);
   }
-  if (!office.active) walkTick(t, c);
+  if (!office.active) walkTick(t, c, !fly.on);
   lyricTick();
 }
 
 askForm.addEventListener('submit', e => {
   e.preventDefault();
-  const text = q.value.trim(); if (!text || !['idle', 'done', 'roam'].includes(show.mode)) return;
+  const text = q.value.trim(); if (!text || !['idle', 'roam'].includes(show.mode)) return;
   q.value = ''; sendBtn.disabled = true; q.style.height = '44px'; q.blur();
   perform(text);
 });
