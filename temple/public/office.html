@@ -237,6 +237,30 @@
   #bubble.office::after { border-right-color: #8cc7ff; border-bottom-color: #8cc7ff; }
   #bubble.office { border-color: #8cc7ff; box-shadow: 0 0 0 4px rgba(140,199,255,.25), 0 8px 26px rgba(10,30,70,.35); }
   #bubble.office .who { color: #3f86c9; }
+
+  /* 靈魂唱歌時頭上的 KTV 螢幕 */
+  #ktv { position: fixed; left: 0; top: 0; width: min(58vw, 380px); aspect-ratio: 16 / 10; border-radius: 8px; overflow: hidden;
+    border: 3px solid #0e1a26; box-shadow: 0 12px 34px rgba(0,0,0,.5); opacity: 0; visibility: hidden;
+    transition: opacity .35s; pointer-events: none; z-index: 30; }
+  #ktv.show { opacity: 1; }
+  #ktvBg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+  #ktvGlass { position: absolute; inset: 0; background: linear-gradient(rgba(0,0,0,.3), rgba(0,0,0,0) 36%, rgba(0,0,0,0) 54%, rgba(0,0,0,.45)); }
+  #ktvHead, #ktvSub { position: absolute; inset: 0; display: flex; flex-direction: column; text-align: center; padding: 0 6%; }
+  #ktvHead { align-items: center; justify-content: center; gap: 4%; padding-top: 9%; font-family: "Noto Serif TC", serif; transition: opacity .4s; }
+  #ktvHead .kw { position: absolute; top: 4%; left: 4%; font-family: "Arial Black", "Noto Sans TC", sans-serif; font-style: italic; font-weight: 900;
+    font-size: clamp(13px, 3.4vw, 24px); letter-spacing: .03em; color: #1f3fd0; -webkit-text-stroke: 1px #fff; text-shadow: 0 2px 4px rgba(0,0,0,.55); }
+  #ktvHead .kt { font-weight: 900; font-size: clamp(17px, 4.8vw, 32px); line-height: 1.25; color: #e8243c; -webkit-text-stroke: .8px #fff; text-shadow: 0 2px 6px rgba(0,0,0,.55); }
+  #ktvHead .kc { white-space: pre-line; line-height: 1.55; font-weight: 700; font-size: clamp(10px, 2.5vw, 15px); color: #15b857; -webkit-text-stroke: .6px #fff; text-shadow: 0 2px 5px rgba(0,0,0,.5); }
+  #ktvSub { align-items: stretch; justify-content: flex-end; padding-bottom: 6%; gap: 2px; opacity: 0; transition: opacity .3s;
+    font-family: "Noto Sans TC", sans-serif; }
+  #ktv.sing #ktvHead { opacity: 0; }
+  #ktv.sing #ktvSub { opacity: 1; }
+  #ktvSub span { font-weight: 900; letter-spacing: .03em;
+    text-shadow: -2px 0 #0b1118, 2px 0 #0b1118, 0 -2px #0b1118, 0 2px #0b1118, -2px -2px #0b1118, 2px 2px #0b1118, -2px 2px #0b1118, 2px -2px #0b1118, 0 3px 8px rgba(0,0,0,.6); }
+  #ktvSub .l1 { font-size: clamp(16px, 4.2vw, 28px); text-align: left; }
+  #ktvSub .l1 .on { color: #ffd23f; }
+  #ktvSub .l1 .off { color: #fff; }
+  #ktvSub .l2 { font-size: clamp(12px, 3vw, 19px); color: #e4ecf5; text-align: right; }
 </style>
 <script type="importmap">
 { "imports": {
@@ -283,6 +307,10 @@
 </div>
 <img id="printImg" alt="功德收據">
 <div id="bubble"><span class="who">小師父</span><span id="say"></span></div>
+<div id="ktv" aria-hidden="true"><img id="ktvBg" alt=""><div id="ktvGlass"></div>
+  <div id="ktvHead"><span class="kw">KARAOKE</span><span class="kt"></span><span class="kc"></span></div>
+  <div id="ktvSub"><span class="l1"><span class="on"></span><span class="off"></span></span><span class="l2"></span></div>
+</div>
 <form id="ask" autocomplete="off">
   <textarea id="q" rows="1" placeholder="說說今天的職場苦水⋯⋯" maxlength="300"></textarea>
   <button id="send" type="submit" disabled>上香</button>
@@ -1089,7 +1117,7 @@ function placeBubble() {
   let cam = camera;
   if (office.active) {
     const s = OFF.soulModel;
-    if (!s || !s.visible) { bubble.style.visibility = 'hidden'; return; }
+    if (!s || !s.visible) { bubble.style.visibility = 'hidden'; ktv.el.style.visibility = 'hidden'; return; }
     headTop.set(0, 1.62, 0); s.localToWorld(headTop); cam = ocam;
   } else {
     if (!monk) return;
@@ -1103,6 +1131,12 @@ function placeBubble() {
   bubble.style.top = Math.max(y - 8, bubble.offsetHeight + (office.active ? 14 : 90)) + 'px';
   bubble.style.setProperty('--tail', `${Math.min(Math.max(50 + (x - left) / bw * 100, 14), 86)}%`);
   bubble.style.visibility = (headTop.z > 1 || x < -20 || x > innerWidth + 20) ? 'hidden' : 'visible';
+  if (ktv.el.classList.contains('show')) {
+    const kw = ktv.el.offsetWidth, kh = ktv.el.offsetHeight;
+    ktv.el.style.left = Math.min(Math.max(x - kw / 2, 8), innerWidth - kw - 8) + 'px';
+    ktv.el.style.top = Math.max(y - kh - 16, 8) + 'px';
+    ktv.el.style.visibility = bubble.style.visibility;
+  }
 }
 q.addEventListener('input', () => {
   sendBtn.disabled = !q.value.trim();
@@ -1195,8 +1229,69 @@ function drawLyric(key, build) {
   show.drawn = key; clearInterval(typing);
   sayEl.replaceChildren(...build());
 }
+/* ---------- 靈魂唱歌時，頭上那台 KTV ---------- */
+const KTV_CATS = [
+  { src: 'assets/office/cats/cat1.jpg', crop: 0.22 },
+  { src: 'assets/office/cats/cat2.webp', crop: 0.19 },
+  { src: 'assets/office/cats/cat3.jpg', crop: 0.19 },
+  { src: 'assets/office/cats/cat4.webp', crop: 0 },
+];
+const KTV_CREDIT = '作曲：AI 小師父\n作詞：施主的苦水\nPublisher：職場功德所';
+const ktv = {
+  el: document.getElementById('ktv'),
+  bg: document.getElementById('ktvBg'),
+  kt: document.querySelector('#ktvHead .kt'),
+  kc: document.querySelector('#ktvHead .kc'),
+  on: document.querySelector('#ktvSub .on'),
+  off: document.querySelector('#ktvSub .off'),
+  l2: document.querySelector('#ktvSub .l2'),
+  drawn: '',
+};
+// 每次開唱隨機挑一張貓咪當背景
+function ktvOpen() {
+  const c = KTV_CATS[Math.floor(Math.random() * KTV_CATS.length)];
+  ktv.bg.src = c.src;
+  ktv.bg.style.height = (100 / (1 - c.crop)) + '%';   // 原圖下面的字切掉
+  ktv.drawn = ''; ktv.el.classList.remove('sing');
+  ktv.kt.textContent = ''; ktv.kc.textContent = '';
+  ktv.on.textContent = ''; ktv.off.textContent = ''; ktv.l2.textContent = '';
+  ktv.el.classList.add('show');
+}
+function ktvClose() { ktv.el.classList.remove('show', 'sing'); ktv.el.style.visibility = 'hidden'; }
+function ktvTick(b) {
+  if (show.mode === 'waiting') {
+    if (ktv.drawn !== 'wait') {
+      ktv.drawn = 'wait'; ktv.el.classList.remove('sing');
+      ktv.kt.textContent = '施主的苦水，正在變成歌詞'; ktv.kc.textContent = '作詞中⋯⋯請稍候';
+    }
+    return;
+  }
+  if (show.mode !== 'rap') return;
+  const { lines, title } = show.rap;
+  const idx = Math.floor(b / 4) - show.startBar;
+  // 開唱前：KARAOKE 標題＋詞曲人
+  if (idx < 0) {
+    if (ktv.drawn !== 'ready') {
+      ktv.drawn = 'ready'; ktv.el.classList.remove('sing');
+      ktv.kt.textContent = `〈${title}〉`; ktv.kc.textContent = KTV_CREDIT;
+    }
+    return;
+  }
+  if (idx >= lines.length) { soulExit(); return; }
+  if (voice.sungIdx !== idx) { voice.sungIdx = idx; sing(lines[idx], SPB() * 3.6); }
+  const line = [...lines[idx]], prog = ((b % 4) / 4) * 1.25;
+  const lit = Math.min(line.length, Math.ceil(prog * line.length));
+  const key = `${idx}:${lit}`;
+  if (ktv.drawn === key) return;
+  ktv.drawn = key;
+  ktv.el.classList.add('sing');
+  ktv.on.textContent = line.slice(0, lit).join('');
+  ktv.off.textContent = line.slice(lit).join('');
+  ktv.l2.textContent = lines[idx + 1] || '';
+}
 function lyricTick() {
   const b = beatPos();
+  if (office.active) { ktvTick(b); return; }
   if (show.mode === 'waiting') {
     drawLyric('wait' + (Math.floor(b / 2) % 3), () => [el('span', 'line', ['Beat 下', '呦～', '貧僧押韻中'][Math.floor(Math.max(b, 0) / 2) % 3]), el('span', 'next', '施主的苦水，正在變成歌詞⋯⋯')]);
     return;
@@ -1219,7 +1314,7 @@ function lyricTick() {
 async function perform(complaint) {
   ensureAudio();
   askForm.classList.remove('show');
-  bubble.classList.add('rap');
+  if (office.active) ktvOpen(); else bubble.classList.add('rap');
   show.mode = 'waiting'; show.drawn = ''; show.complaint = complaint; voice.sungIdx = -1;
   if (synth && voice.on) { synth.cancel(); synth.speak(new SpeechSynthesisUtterance(' ')); }
   if (controls.target.distanceTo(HOME_T) > 0.5) flyHome();
@@ -1608,22 +1703,52 @@ function workScreenTex(hue = 130) {
     for (let i = 0; i < 9; i++) { g.fillStyle = cs[i % cs.length]; g.fillRect(284 + (i % 3) * 10, 104 + i * 19, 50 + ((i * 37) % 110), 7); }
   });
 }
-// 你的螢幕：公司群組視窗，會顯示你打的字
+// 你的螢幕：貓咪梗圖當桌布，三張輪播；開始打字之後，下面的字幕換成你打的字
+const DESK_CATS = [
+  { src: 'assets/office/cats/cat1.jpg', cap: '誰欺負你了 跟我說說', crop: 0.22 },
+  { src: 'assets/office/cats/cat2.webp', cap: '太累了吧 ～～～', crop: 0.19 },
+  { src: 'assets/office/cats/cat3.jpg', cap: '今天是怎樣啊 眼神死', crop: 0.19 },
+];
+let deskIdx = Math.floor(Math.random() * DESK_CATS.length), deskText = '';
+for (const c of DESK_CATS) { const im = new Image(); im.onload = () => { c.img = im; drawPlayerScreen(deskText); }; im.src = c.src; }
+// 沒在打字的時候，桌布每 6 秒換一張
+setInterval(() => {
+  if (!office.active || deskText || show.mode !== 'idle') return;
+  deskIdx = (deskIdx + 1) % DESK_CATS.length; drawPlayerScreen('');
+}, 6000);
+// 梗圖字幕：白字黑框，從底部往上排
+function deskCaption(g, w, h, msg) {
+  if (!msg) return;
+  g.font = '900 34px "Noto Sans TC", sans-serif';
+  g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.lineJoin = 'round'; g.miterLimit = 2;
+  const lines = []; let cur = '';
+  for (const ch of msg) {
+    if (ch === '\n') { lines.push(cur); cur = ''; continue; }
+    if (g.measureText(cur + ch).width > w - 48) { lines.push(cur); cur = ch; } else cur += ch;
+  }
+  lines.push(cur);
+  const use = lines.slice(-3), base = h - 20 - (use.length - 1) * 40;
+  use.forEach((l, i) => {
+    const y = base + i * 40;
+    g.strokeStyle = '#121212'; g.lineWidth = 9; g.strokeText(l, w / 2, y);
+    g.fillStyle = '#fff'; g.fillText(l, w / 2, y);
+  });
+  g.textAlign = 'left';
+}
 function drawPlayerScreen(text) {
   const s = OFF.screen; if (!s) return;
-  const g = s.g, w = 512, h = 320;
-  g.fillStyle = '#f7fbf7'; g.fillRect(0, 0, w, h);
-  g.fillStyle = '#d9ead9'; g.fillRect(0, 0, w, 50);
-  g.fillStyle = '#4d6b55'; g.font = '700 24px "Noto Sans TC", sans-serif'; g.textBaseline = 'middle';
-  g.fillText('公司群組・未讀 99+', 20, 26);
-  const msg = text || '今天又怎麼了？把苦水打在這裡⋯⋯';
-  g.fillStyle = text ? '#23313a' : '#8fa39a'; g.font = '500 32px "Noto Sans TC", sans-serif'; g.textBaseline = 'top';
-  const lines = []; let cur = '';
-  for (const ch of msg) { if (g.measureText(cur + ch).width > w - 50) { lines.push(cur); cur = ch; } else cur += ch; }
-  lines.push(cur);
-  lines.slice(0, 6).forEach((l, i) => g.fillText(l, 24, 72 + i * 40));
-  const last = lines.slice(0, 6), lw = g.measureText(last[last.length - 1]).width;
-  g.fillStyle = '#2f7d4f'; g.fillRect(28 + lw, 72 + (last.length - 1) * 40, 4, 34);
+  deskText = text || '';
+  const g = s.g, w = 512, h = 320, c = DESK_CATS[deskIdx];
+  g.fillStyle = '#1b1f24'; g.fillRect(0, 0, w, h);
+  if (c.img) {
+    const sw = c.img.width, sh = Math.round(c.img.height * (1 - c.crop));
+    const k = Math.max(w / sw, h / sh), dw = sw * k, dh = sh * k;
+    g.drawImage(c.img, 0, 0, sw, sh, (w - dw) / 2, (h - dh) / 2, dw, dh);
+  }
+  const grd = g.createLinearGradient(0, h * 0.5, 0, h);
+  grd.addColorStop(0, 'rgba(0,0,0,0)'); grd.addColorStop(1, 'rgba(0,0,0,.5)');
+  g.fillStyle = grd; g.fillRect(0, h * 0.5, w, h * 0.5);
+  deskCaption(g, w, h, deskText || c.cap);
   s.tex.needsUpdate = true;
 }
 
@@ -2875,7 +3000,7 @@ function buildSoul3D() {
   for (const s of [-1, 1]) { const c = mesh(rbox(0.12, 0.05, 0.08, 0.02), bright, torso, s * 0.08, 0.52, 0.17); c.rotation.z = s * 0.4; }
   // 尾巴是另外一條連續的光（makeSoulTail），從這裡一路接到本人頭頂
   // 頭：臉、耳朵、圓圓的頭髮（跟本人一樣）
-  const head = new THREE.Group(); head.position.y = 0.88; torso.add(head);
+  const head = new THREE.Group(); head.position.y = 0.78; torso.add(head);
   // 臉整個要亮：底色近白、再用同一張貼圖當自發光（五官是深色，所以不會跟著發光，表情還是清楚）
   const faceTex = soulFaceTex();
   mesh(sphere(0.4, 40, 24), M({ map: faceTex, emissiveMap: faceTex, color: '#f2fbff', emissive: '#d8f1ff', emissiveIntensity: 1.15, opacity: 1 }), head);
@@ -2939,7 +3064,7 @@ function soulPose(s, t, bounce, b) {
 }
 
 /* ---------- 辦公室：3D 靈魂出竅 ---------- */
-const SOUL_HOVER = new THREE.Vector3(0, 2.8, 3.55), _sf = new THREE.Vector3(), _sp = new THREE.Vector3();
+const SOUL_HOVER = new THREE.Vector3(0, 2.42, 3.55), _sf = new THREE.Vector3(), _sp = new THREE.Vector3();
 function soulOut() {
   OFF.state = 'soul'; OFF.soulT0 = show.clock; OFF.soulUpT0 = null;
   document.body.classList.add('soul-dim');
@@ -2966,7 +3091,7 @@ function soul3dTick(t, bounce, b) {
   let op = Math.min(1, k * 3), up = 0;
   if (OFF.soulUpT0 != null) { up = Math.min((t - OFF.soulUpT0) / 0.9, 1); _sp.y += up * up * 6; op *= 1 - up * 0.5; }
   s.position.copy(_sp);
-  const sc = THREE.MathUtils.lerp(0.12, 1, e), stretch = (1 - e) * 0.7;
+  const sc = THREE.MathUtils.lerp(0.12, 0.86, e), stretch = (1 - e) * 0.7;
   s.scale.set(sc * (1 - stretch * 0.4) * (1 + bounce * 0.03), sc * (1 + stretch) * (1 - bounce * 0.04), sc * (1 + bounce * 0.03));
   s.rotation.y = Math.atan2(ocam.position.x - _sp.x, ocam.position.z - _sp.z) * 0.6;
   soulPose(s, t, bounce, b);
@@ -3000,7 +3125,6 @@ const office = {
 // 網址加 ?soul=a / b / c 可以換靈魂造型
 const SOUL_PICK = (new URLSearchParams(location.search).get('soul') || 'c').replace(/[^abc]/g, '') || 'c';
 office.soulImg.src = `assets/office/soul_${SOUL_PICK}.jpg`;
-const SCREEN_HINT = '今天又怎麼了？把苦水打在這裡⋯⋯';
 function drawScreen() {
   const v = q.value.trim();
   drawPlayerScreen(v);
@@ -3023,7 +3147,6 @@ askForm.addEventListener('submit', e => {
   if (OFF.state !== 'seated') { e.preventDefault(); e.stopImmediatePropagation(); return; }
   const text = q.value.trim(); if (!text) return;
   drawPlayerScreen(text);
-  bubble.classList.add('show');
   soulOut();
   woosh(0.6, 240, 900);
 }, { capture: true });
@@ -3040,6 +3163,7 @@ function soulExit() {
   if (show.mode !== 'rap') return;
   show.mode = 'soul'; show.drawn = '';
   stopBeat();
+  ktvClose();
   bubble.classList.remove('show', 'rap');
   OFF.soulUpT0 = show.clock;
   woosh(0.9, 300, 1400);
