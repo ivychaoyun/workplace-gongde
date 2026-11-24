@@ -33,7 +33,9 @@ python3 -m http.server 5175 --directory public   # 只看網頁，打開 http://
 npm start                                        # 連同 AI 歌詞服務（需要 .env 裡的金鑰）
 ```
 
-沒有自動化測試。改完請在瀏覽器實際走一遍：辦公室寫抱怨 → 靈魂出竅唱饒舌 → 飛到寺廟 → 敲木魚 → 功德單，並檢查手機寬度。
+沒有自動化測試。改完請在瀏覽器實際走一遍：辦公室寫抱怨 → 靈魂出竅唱饒舌 → 飛到寺廟 → 敲木魚 → 功德單 → 回到公司（結局），並檢查手機寬度。
+
+測試捷徑：網址加 `?ending`（例如 `http://localhost:5175/?ending`）會跳過前面直接進結局；主控台可以用 `window.__ending` 看結局的狀態。
 
 ## 歌詞來源（重要）
 
@@ -55,6 +57,7 @@ npm start                                        # 連同 AI 歌詞服務（需�
 | `public/js/temple.js` | 寺廟流程：對話、等歌詞 → rap → 跪下敲木魚 → 功德單；歌詞來源 `LYRIC_SOURCE` | 安淇 `foraianother8-ann`（歌詞來源與姵宣協調） |
 | `public/js/temple-walk.js` | 小和尚在寺廟裡用鍵盤走動（`show.mode` 的 `'roam'`） | 安淇 `foraianother8-ann` |
 | `public/js/audio.js` | Web Audio 節拍、木魚聲、磬、小師父人聲 | 姵宣 `peixuan` |
+| `public/js/ending.js` | 結局：功德單後「回到公司」→ 靈魂回到身體、顏色恢復 → 茶水間／窗邊／回座位 → 結尾字卡 | 趙芸 `chaoyun` |
 | `public/js/lyric-library.js` | 歌詞庫，格式見 `docs/歌詞庫製作指南.md` | 姵宣 `peixuan` |
 | `public/js/lyrics.js` | 依抱怨從歌詞庫配對：`buildLyrics()`、`rankLyrics()` | 姵宣 `peixuan` |
 | `public/js/content.js` | 情境文案（目前只有工具頁在用） | 欣亞 `cynthia` |

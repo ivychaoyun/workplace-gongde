@@ -591,8 +591,9 @@ function setOfficeUI() {
   walkHint.textContent = st === 'walk' ? (HOVER ? '點地板或用 WASD 走路・點同事聊天・點你的電腦回座位' : '點地板走路・點同事聊天・點你的電腦回座位') : '';
   if (st === 'seated' && show.mode === 'idle') askForm.classList.add('show'); else if (st !== 'soul') askForm.classList.remove('show');
 }
-function standUp() {
-  if (OFF.state !== 'seated' || show.mode !== 'idle') return;
+function standUp(force = false) {
+  // force：結局（ending.js）醒來後要直接站起來，不檢查流程狀態
+  if (OFF.state !== 'seated' || (!force && show.mode !== 'idle')) return;
   const me = OFF.me;
   officeScene.attach(me.root);
   me.root.position.set(SEAT_STAND.x, 0, SEAT_STAND.z); me.root.rotation.set(0, 0, 0);
@@ -634,7 +635,7 @@ function playerTick(t, dt, bounce, b) {
     for (const a of me.arms) { a.rotation.x = THREE.MathUtils.lerp(-1.05, -1.55, k); a.rotation.z = -0.35 * a.userData.s; }
     return;
   }
-  if (OFF.state !== 'walk') return;
+  if (OFF.state !== 'walk' || OFF.frozen) return;   // frozen：結局在泡茶、伸懶腰時先不能走
   const pos = me.root.position;
   let mx = 0, mz = 0;
   const K = OFF.keys;
@@ -1058,3 +1059,5 @@ function soulTick(t) {
 }
 
 export { OFF, buildOffice, ocam, office, officeIntro, officeScene, officeTick, soulExit, soulTick };
+// 結局（ending.js）用的
+export { SEAT_STAND, SOUL_HOVER, cupMesh, holdInHand, sitDown, soulGlow, soulOpacity, soulPose, standUp, woosh };

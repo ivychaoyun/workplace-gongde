@@ -7,6 +7,7 @@ import { buildAltar, buildAltarBack, buildBuddha, buildCushions, buildLanterns, 
 import { buildMonk, buildPeople } from './characters.js';
 import { fly, placeBubble, say, setMonk, tick } from './temple.js';
 import { buildOffice, ocam, office, officeIntro, officeScene, officeTick } from './office.js';
+import { endingTick } from './ending.js';
 
 /* ---------- 開場 ---------- */
 const hint = document.getElementById('hint');
@@ -28,7 +29,7 @@ async function start() {
     const t = clock.getElapsedTime();
     tick(t);
     if (!fly.on) controls.update();
-    if (office.active) { officeTick(t); renderer.render(officeScene, ocam); }
+    if (office.active) { officeTick(t); endingTick(t); renderer.render(officeScene, ocam); }
     else renderer.render(scene, camera);
     placeBubble();
   });
