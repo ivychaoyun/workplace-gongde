@@ -169,23 +169,40 @@
   #bubble.office .who { color: #3f86c9; }
 
   /* ---------- 結局（ending.js） ---------- */
-  body.ending #standBtn, body.ending #ask, body.ending #bubble, body.ending #knock, body.ending #talk { display: none !important; }
+  body.ending #standBtn, body.ending #ask, body.ending #bubble, body.ending #knock, body.ending #talk, body.ending #walkHint { display: none !important; }
   #endRipple { position: fixed; inset: 0; pointer-events: none; z-index: 6; opacity: 0;
     background: radial-gradient(circle at 50% 55%, transparent 0, transparent 30%, rgba(255,247,225,.85) 34%, transparent 40%); }
   #endRipple.go { animation: endRipple 1.8s ease-out forwards; }
   @keyframes endRipple { 0% { opacity: 1; transform: scale(.2); } 70% { opacity: .7; } 100% { opacity: 0; transform: scale(2.6); } }
-  #endCaption { position: fixed; left: 50%; top: 28%; transform: translate(-50%, 8px); z-index: 8; pointer-events: none;
-    padding: 14px 26px; border-radius: 18px; background: rgba(43,36,32,.78); color: #fff6e6;
-    font: 700 clamp(18px, 4.6vw, 26px)/1.5 'Noto Serif TC', serif; white-space: nowrap; opacity: 0; transition: opacity .6s, transform .6s; }
+  /* 休息時畫面慢慢變暗、變暖 */
+  #endWarm { position: fixed; inset: 0; pointer-events: none; z-index: 6; opacity: 0; transition: opacity 5s ease;
+    background: radial-gradient(ellipse at 50% 45%, rgba(255,190,110,.10), rgba(70,40,20,.55) 85%); }
+  #endWarm.on { opacity: 1; }
+  /* 字句：不放卡片，直接浮在畫面上 */
+  #endCaption { position: fixed; left: 50%; top: 20%; transform: translate(-50%, 10px); z-index: 8; pointer-events: none;
+    width: min(92vw, 640px); text-align: center; white-space: pre-line; color: #fffaf0;
+    font: 700 clamp(18px, 4.4vw, 26px)/1.7 'Noto Serif TC', serif; letter-spacing: .06em;
+    text-shadow: 0 1px 2px rgba(0,0,0,.7), 0 2px 12px rgba(0,0,0,.6), 0 0 40px rgba(0,0,0,.45); opacity: 0; transition: opacity 1.2s, transform 1.2s; }
   #endCaption.show { opacity: 1; transform: translate(-50%, 0); }
-  #ending { position: fixed; inset: 0; z-index: 21; display: flex; align-items: center; justify-content: center; padding: 16px;
-    background: rgba(30,24,20,.45); opacity: 0; pointer-events: none; transition: opacity .8s; }
-  #ending.show { opacity: 1; pointer-events: auto; }
-  #ending .end-card { background: #fffaf1; border-radius: 22px; padding: 30px 28px 24px; text-align: center; max-width: 360px; width: 100%;
-    box-shadow: 0 18px 50px rgba(0,0,0,.25); }
-  #ending .end-line { margin: 0 0 6px; color: #6b5546; font: 700 18px/1.6 'Noto Serif TC', serif; }
-  #ending .end-line.big { color: #9a2722; font-size: 28px; margin-bottom: 22px; }
-  #ending .end-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-  #ending button { border: 1.5px solid #e6cfa3; border-radius: 99px; padding: 10px 18px; font: inherit; font-size: 15px; font-weight: 700;
-    background: #fffaf1; color: #8a4a22; cursor: pointer; }
-  #ending button.primary { background: linear-gradient(#c23c30, #9a2722); color: #fff4dc; border-color: #9a2722; }
+  /* 動作按鈕：畫面下方中間 */
+  #endAct { position: fixed; left: 50%; bottom: calc(34px + env(safe-area-inset-bottom)); transform: translate(-50%, 16px); z-index: 9;
+    display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 14px 30px; border-radius: 99px; cursor: pointer;
+    border: 2px solid #f1d79e; background: linear-gradient(#c23c30, #9a2722); color: #fff4dc; font: 700 18px 'Noto Sans TC', sans-serif;
+    box-shadow: 0 10px 28px rgba(0,0,0,.28); opacity: 0; pointer-events: none; transition: opacity .5s, transform .5s; }
+  #endAct small { font-size: 11px; font-weight: 500; opacity: .75; }
+  #endAct.show { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); animation: endPulse 2.2s ease-in-out infinite .6s; }
+  @keyframes endPulse { 50% { box-shadow: 0 10px 28px rgba(0,0,0,.28), 0 0 0 10px rgba(241,215,158,.25); } }
+  #endSkip { position: fixed; top: calc(14px + env(safe-area-inset-top)); right: 16px; z-index: 9; border: 0; border-radius: 99px;
+    padding: 6px 14px; background: rgba(255,255,255,.75); color: #6b5546; font: 500 13px 'Noto Sans TC', sans-serif; cursor: pointer;
+    opacity: 0; pointer-events: none; transition: opacity .5s; }
+  #endSkip.show { opacity: 1; pointer-events: auto; }
+  /* 結尾字句：一樣直接浮在畫面上 */
+  #endFinal { position: fixed; inset: 0; z-index: 21; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 16px; text-align: center; opacity: 0; pointer-events: none; transition: opacity 2.4s ease; }
+  #endFinal.show { opacity: 1; pointer-events: auto; }
+  #endFinal .end-line { margin: 0 0 8px; color: #fff3df; font: 700 clamp(18px, 4.5vw, 24px)/1.6 'Noto Serif TC', serif; letter-spacing: .08em;
+    text-shadow: 0 2px 12px rgba(0,0,0,.6); }
+  #endFinal .end-line.big { font-size: clamp(30px, 8vw, 44px); margin-bottom: 30px; }
+  #endFinal button { border: 1.5px solid rgba(255,243,223,.7); border-radius: 99px; padding: 9px 20px; background: rgba(0,0,0,.25);
+    color: #fff3df; font: 700 14px 'Noto Sans TC', sans-serif; cursor: pointer; opacity: 0; transition: opacity 1s 2.2s; }
+  #endFinal.show button { opacity: 1; }

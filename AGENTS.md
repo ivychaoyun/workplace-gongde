@@ -57,7 +57,7 @@ npm start                                        # 連同 AI 歌詞服務（需�
 | `public/js/temple.js` | 寺廟流程：對話、等歌詞 → rap → 跪下敲木魚 → 功德單；歌詞來源 `LYRIC_SOURCE` | 安淇 `foraianother8-ann`（歌詞來源與姵宣協調） |
 | `public/js/temple-walk.js` | 小和尚在寺廟裡用鍵盤走動（`show.mode` 的 `'roam'`） | 安淇 `foraianother8-ann` |
 | `public/js/audio.js` | Web Audio 節拍、木魚聲、磬、小師父人聲 | 姵宣 `peixuan` |
-| `public/js/ending.js` | 結局：功德單後「回到公司」→ 靈魂回到身體、顏色恢復 → 茶水間／窗邊／回座位 → 結尾字卡 | 趙芸 `chaoyun` |
+| `public/js/ending.js` | 結局：功德單後「回到公司」→ 靈魂回到身體、顏色恢復 → 自動走到茶水間泡咖啡、窗邊開窗、回座位休息（每處 3 個按鈕，`STEPS` 陣列）→ 結尾字句；鏡頭用 `SHOTS`，透過 `OFF.camShot` 指定 | 趙芸 `chaoyun` |
 | `public/js/lyric-library.js` | 歌詞庫，格式見 `docs/歌詞庫製作指南.md` | 姵宣 `peixuan` |
 | `public/js/lyrics.js` | 依抱怨從歌詞庫配對：`buildLyrics()`、`rankLyrics()` | 姵宣 `peixuan` |
 | `public/js/content.js` | 情境文案（目前只有工具頁在用） | 欣亞 `cynthia` |
