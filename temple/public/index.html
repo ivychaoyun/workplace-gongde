@@ -60,11 +60,16 @@
     #title { left: 28px; transform: none; }
     #hint { left: 28px; transform: none; }
   }
-  #merit { position: fixed; top: calc(14px + env(safe-area-inset-top)); right: 16px; padding: 6px 12px; border-radius: 99px;
-    background: rgba(255,250,242,.9); border: 1.5px solid #e6cfa3; font-size: 13px; font-weight: 700; color: #8a4a22;
-    box-shadow: 0 4px 12px rgba(110,50,20,.12); pointer-events: none; transition: transform .15s; }
-  #merit b { font-size: 15px; color: var(--red); margin-left: 4px; }
-  #merit.bump { transform: scale(1.15); }
+  /* 右上角 HUD：功德木籤 + 兩顆圓鈕 */
+  #merit { position: fixed; top: calc(14px + env(safe-area-inset-top)); right: 16px; z-index: 6;
+    display: inline-flex; align-items: center; gap: 6px; padding: 6px 13px 6px 11px; border-radius: 5px;
+    background: linear-gradient(#b8352d, #8e231f); border: 1.5px solid var(--gold);
+    font-family: "Noto Serif TC", serif; font-size: 11px; font-weight: 700; color: #f3cf92; letter-spacing: .18em;
+    box-shadow: 0 4px 12px rgba(80,25,15,.3); pointer-events: none; transition: transform .15s;
+    transform-origin: 100% 0; }
+  #merit b { font-family: "Noto Serif TC", serif; font-size: 19px; font-weight: 900; color: #ffe9bd;
+    letter-spacing: 0; line-height: 1; margin: 0; }
+  #merit.bump { transform: scale(1.12); }
   @media (max-width: 420px) { #title { left: 16px; transform: none; } #hint { left: 16px; transform: none; } }
   #bubble .title { display: block; font-size: 12px; color: #b07a3a; font-weight: 700; margin-bottom: 4px; }
   #bubble .line { font-size: 21px; font-weight: 700; letter-spacing: .04em; }
@@ -75,9 +80,20 @@
   .plus { position: fixed; font-weight: 900; font-size: 18px; color: #c0392b; pointer-events: none; white-space: nowrap;
     text-shadow: 0 2px 0 #fff4dc; animation: plus 1s ease-out forwards; }
   @keyframes plus { from { opacity: 1; transform: translate(-50%, 0) scale(.8); } 20% { transform: translate(-50%, -14px) scale(1.15); } to { opacity: 0; transform: translate(-50%, -70px) scale(1); } }
-  #voice { position: fixed; top: calc(52px + env(safe-area-inset-top)); right: 16px; border: 1.5px solid #e6cfa3; border-radius: 99px;
-    background: rgba(255,250,242,.9); color: #8a4a22; font: inherit; font-size: 12px; font-weight: 700; padding: 4px 10px; cursor: pointer; }
-  #voice.off { color: #b49a85; }
+  .hud-btn { position: fixed; top: calc(54px + env(safe-area-inset-top)); z-index: 6;
+    width: 34px; height: 34px; display: grid; place-items: center; padding: 0;
+    border: 1.5px solid #e8d2a6; border-radius: 50%; background: rgba(255,250,242,.94);
+    box-shadow: 0 3px 10px rgba(90,40,15,.16); cursor: pointer;
+    transition: transform .15s, background .15s; -webkit-appearance: none; }
+  .hud-btn:hover { background: #fff; transform: translateY(-1px); }
+  .hud-btn:active { transform: translateY(0) scale(.94); }
+  .hud-btn svg { width: 16px; height: 16px; fill: none; stroke: #a86a3e; stroke-width: 1.9;
+    stroke-linecap: round; stroke-linejoin: round; }
+  .hud-btn.off svg { stroke: #c3ab96; }
+  #voice { right: 57px; }
+  #toOffice { right: 16px; }
+  #voice .ic-off, #voice.off .ic-on { display: none; }
+  #voice.off .ic-off { display: block; }
 
   /* 敲木魚進度 */
   #knock { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
@@ -135,8 +151,9 @@
 <div id="fade"></div>
 <div id="title">職場功德所</div>
 <div id="hint">單指拖曳環繞・雙指縮放</div>
-<div id="merit">功德<b id="meritN">0</b></div>
-<button id="voice" type="button">人聲 開</button>
+<div id="merit"><span>功德</span><b id="meritN">0</b></div>
+<button id="voice" class="hud-btn" type="button" aria-label="人聲開關"><svg class="ic-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9.5a4 4 0 0 1 0 5"/><path d="M19.5 7a7.5 7.5 0 0 1 0 10"/></svg><svg class="ic-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M18 9.5l4.5 5M22.5 9.5l-4.5 5"/></svg></button>
+<a id="toOffice" class="hud-btn" href="office.html" aria-label="回辦公室" title="回辦公室"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h9"/></svg></a>
 <div id="knock">
   <div class="knock-top"><span>木魚</span><b><span id="knockN">0</span> / 30</b></div>
   <div class="knock-track"><div id="knockBar"></div></div>
@@ -1117,7 +1134,7 @@ function sing(text, seconds, pitch = 0.85) {
   synth.speak(u);
 }
 const voiceBtn = document.getElementById('voice');
-function drawVoiceBtn() { voiceBtn.textContent = voice.on ? '人聲 開' : '人聲 關'; voiceBtn.classList.toggle('off', !voice.on); }
+function drawVoiceBtn() { voiceBtn.classList.toggle('off', !voice.on); voiceBtn.setAttribute('aria-label', voice.on ? '人聲 開' : '人聲 關'); }
 voiceBtn.addEventListener('click', () => {
   voice.on = !voice.on; drawVoiceBtn();
   if (!voice.on && synth) synth.cancel();
