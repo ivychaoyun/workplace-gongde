@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { askForm, bubble, q, sayEl, sendBtn, show } from './ui.js';
 import { SERIF, a0Dist, altarLight, camera, controls, renderer } from './core.js';
 import { W, anim } from './temple-scene.js';
-import { SPB, audio, beatPos, bowl, ensureAudio, noise, sing, startBeat, stopBeat, synth, voice, woodfish } from './audio.js';
+import { SPB, WAITING_BEAT, audio, beatPos, bowl, ensureAudio, noise, pickBeat, sing, singLead, startBeat, stopBeat, synth, voice, woodfish } from './audio.js';
 import { OFF, ocam, office, soulExit, soulTick } from './office.js';
 import { walkTick } from './temple-walk.js';
 
@@ -114,7 +114,7 @@ function localRap(complaint = '') {
   // 歌詞庫：沒有選情境，所以在整個歌詞庫裡依抱怨的關鍵字配對
   if (typeof buildLyrics === 'function') {
     const pick = buildLyrics({ id: 'other' }, complaint);
-    if (pick.verse) return { title: pick.verse.title, lines: pick.lines, blessing: '善哉善哉，施主今天辛苦了。' };
+    if (pick.verse) return { title: pick.verse.title, lines: pick.lines, scenario: pick.verse.scenario, blessing: '善哉善哉，施主今天辛苦了。' };
   }
   return {
     title: '職場心經 Remix',
@@ -150,9 +150,11 @@ function lyricTick() {
   if (show.mode !== 'rap') return;
   const { lines, title } = show.rap;
   const idx = Math.floor(b / 4) - show.startBar;
+  // 語音開口會延遲一下，提早一點點送出，才會剛好在小節第 1 拍唱出來（singLead 在 audio.js 自動量）
+  const singIdx = Math.floor((b + singLead()) / 4) - show.startBar;
+  if (singIdx >= 0 && singIdx < lines.length && voice.sungIdx !== singIdx) { voice.sungIdx = singIdx; sing(lines[singIdx], SPB() * 3.3); }
   if (idx < 0) { drawLyric('ready', () => [el('span', 'title', `〈${title}〉`), el('span', 'line', '準備好了沒？'), el('span', 'next', lines[0])]); return; }
   if (idx >= lines.length) { office.active ? soulExit() : kneelDown(); return; }
-  if (voice.sungIdx !== idx) { voice.sungIdx = idx; sing(lines[idx], SPB() * 3.6); }
   const line = [...lines[idx]], prog = ((b % 4) / 4) * 1.25;
   const lit = Math.min(line.length, Math.ceil(prog * line.length));
   drawLyric(`${idx}:${lit}`, () => [
@@ -169,11 +171,12 @@ async function perform(complaint) {
   show.mode = 'waiting'; show.drawn = ''; show.complaint = complaint; voice.sungIdx = -1;
   if (synth && voice.on) { synth.cancel(); synth.speak(new SpeechSynthesisUtterance(' ')); }
   if (controls.target.distanceTo(HOME_T) > 0.5) flyHome();
-  startBeat();
+  startBeat(WAITING_BEAT);
   const rap = await fetchRap(complaint);
   if (show.mode !== 'waiting') return;
   show.rap = rap;
-  show.startBar = Math.floor(Math.max(beatPos(), 0) / 4) + 1;
+  startBeat(pickBeat(rap.scenario)); // 依歌詞的情境換一首節拍（beats.js），從頭開始
+  show.startBar = Math.floor(Math.max(beatPos(), 0) / 4) + (audio.beat.intro ?? 2); // 前奏放完才開唱
   show.mode = 'rap';
 }
 /* ---------- 跪下 → 換施主敲 30 下 → 功德圓滿 ---------- */
