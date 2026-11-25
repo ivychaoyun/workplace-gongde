@@ -5,7 +5,7 @@ import { askForm, bubble, q, sayEl, sendBtn, show } from './ui.js';
 import { SERIF, a0Dist, altarLight, camera, controls, renderer } from './core.js';
 import { W, anim } from './temple-scene.js';
 import { SPB, WAITING_BEAT, audio, beatPos, bowl, ensureAudio, noise, pickBeat, sing, singLead, startBeat, stopBeat, synth, voice, woodfish } from './audio.js';
-import { OFF, ocam, office, soulExit, soulTick } from './office.js';
+import { OFF, hideKtv, ktvOpen, ktvTick, ocam, office, placeKtv, soulExit, soulTick } from './office.js';
 import { walkTick } from './temple-walk.js';
 
 /* ---------- 動畫 ---------- */
@@ -78,7 +78,7 @@ function placeBubble() {
   let cam = camera;
   if (office.active) {
     const s = OFF.soulModel;
-    if (!s || !s.visible) { bubble.style.visibility = 'hidden'; return; }
+    if (!s || !s.visible) { bubble.style.visibility = 'hidden'; hideKtv(); return; }
     headTop.set(0, 1.62, 0); s.localToWorld(headTop); cam = ocam;
   } else {
     if (!monk) return;
@@ -92,6 +92,7 @@ function placeBubble() {
   bubble.style.top = Math.max(y - 8, bubble.offsetHeight + (office.active ? 14 : 90)) + 'px';
   bubble.style.setProperty('--tail', `${Math.min(Math.max(50 + (x - left) / bw * 100, 14), 86)}%`);
   bubble.style.visibility = (headTop.z > 1 || x < -20 || x > innerWidth + 20) ? 'hidden' : 'visible';
+  placeKtv(x, y, bubble.style.visibility);
 }
 q.addEventListener('input', () => {
   sendBtn.disabled = !q.value.trim();
@@ -143,6 +144,7 @@ function drawLyric(key, build) {
 }
 function lyricTick() {
   const b = beatPos();
+  if (office.active) { ktvTick(b); return; }
   if (show.mode === 'waiting') {
     drawLyric('wait' + (Math.floor(b / 2) % 3), () => [el('span', 'line', ['Beat 下', '呦～', '貧僧押韻中'][Math.floor(Math.max(b, 0) / 2) % 3]), el('span', 'next', '施主的苦水，正在變成歌詞⋯⋯')]);
     return;
@@ -167,7 +169,7 @@ function lyricTick() {
 async function perform(complaint) {
   ensureAudio();
   askForm.classList.remove('show');
-  bubble.classList.add('rap');
+  if (office.active) ktvOpen(); else bubble.classList.add('rap');
   show.mode = 'waiting'; show.drawn = ''; show.complaint = complaint; voice.sungIdx = -1;
   if (synth && voice.on) { synth.cancel(); synth.speak(new SpeechSynthesisUtterance(' ')); }
   if (controls.target.distanceTo(HOME_T) > 0.5) flyHome();

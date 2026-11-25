@@ -228,7 +228,7 @@ function sing(text, seconds, pitch = 0.85) {
 // 要提早幾拍送出，才會剛好在小節第 1 拍開口
 const singLead = () => Math.min(voice.lat, 0.6) / SPB();
 const voiceBtn = document.getElementById('voice');
-function drawVoiceBtn() { voiceBtn.textContent = voice.on ? '人聲 開' : '人聲 關'; voiceBtn.classList.toggle('off', !voice.on); }
+function drawVoiceBtn() { voiceBtn.classList.toggle('off', !voice.on); voiceBtn.setAttribute('aria-label', voice.on ? '人聲 開' : '人聲 關'); }
 voiceBtn.addEventListener('click', () => {
   voice.on = !voice.on; drawVoiceBtn();
   if (!voice.on && synth) synth.cancel();

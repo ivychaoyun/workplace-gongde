@@ -31,7 +31,7 @@
   #bubble { position: fixed; left: 0; top: 0; width: max-content; max-width: min(78vw, 300px); padding: 12px 16px; border-radius: 18px;
     background: var(--bubble); border: 2px solid #e2c48d; box-shadow: 0 6px 18px rgba(110,50,20,.18);
     font-size: 16px; line-height: 1.55; font-weight: 500; transform: translate(-50%, -100%); opacity: 0;
-    transition: opacity .4s; pointer-events: none; will-change: left, top; }
+    transition: opacity .4s; pointer-events: none; will-change: left, top; z-index: 5; }
   #bubble.show { opacity: 1; }
   #bubble::after { content: ""; position: absolute; left: var(--tail, 50%); bottom: -11px; width: 18px; height: 18px;
     background: var(--bubble); border-right: 2px solid #e2c48d; border-bottom: 2px solid #e2c48d; transform: translateX(-50%) rotate(45deg); }
@@ -54,11 +54,16 @@
     #title { left: 28px; transform: none; }
     #hint { left: 28px; transform: none; }
   }
-  #merit { position: fixed; top: calc(14px + env(safe-area-inset-top)); right: 16px; padding: 6px 12px; border-radius: 99px;
-    background: rgba(255,250,242,.9); border: 1.5px solid #e6cfa3; font-size: 13px; font-weight: 700; color: #8a4a22;
-    box-shadow: 0 4px 12px rgba(110,50,20,.12); pointer-events: none; transition: transform .15s; }
-  #merit b { font-size: 15px; color: var(--red); margin-left: 4px; }
-  #merit.bump { transform: scale(1.15); }
+  /* 右上角 HUD：功德木籤 + 兩顆圓鈕 */
+  #merit { position: fixed; top: calc(14px + env(safe-area-inset-top)); right: 16px; z-index: 6;
+    display: inline-flex; align-items: center; gap: 6px; padding: 6px 13px 6px 11px; border-radius: 5px;
+    background: linear-gradient(#b8352d, #8e231f); border: 1.5px solid var(--gold);
+    font-family: "Noto Serif TC", serif; font-size: 11px; font-weight: 700; color: #f3cf92; letter-spacing: .18em;
+    box-shadow: 0 4px 12px rgba(80,25,15,.3); pointer-events: none; transition: transform .15s;
+    transform-origin: 100% 0; }
+  #merit b { font-family: "Noto Serif TC", serif; font-size: 19px; font-weight: 900; color: #ffe9bd;
+    letter-spacing: 0; line-height: 1; margin: 0; }
+  #merit.bump { transform: scale(1.12); }
   @media (max-width: 420px) { #title { left: 16px; transform: none; } #hint { left: 16px; transform: none; } }
   #bubble .title { display: block; font-size: 12px; color: #b07a3a; font-weight: 700; margin-bottom: 4px; }
   #bubble .line { font-size: 21px; font-weight: 700; letter-spacing: .04em; }
@@ -69,9 +74,19 @@
   .plus { position: fixed; font-weight: 900; font-size: 18px; color: #c0392b; pointer-events: none; white-space: nowrap;
     text-shadow: 0 2px 0 #fff4dc; animation: plus 1s ease-out forwards; }
   @keyframes plus { from { opacity: 1; transform: translate(-50%, 0) scale(.8); } 20% { transform: translate(-50%, -14px) scale(1.15); } to { opacity: 0; transform: translate(-50%, -70px) scale(1); } }
-  #voice { position: fixed; top: calc(52px + env(safe-area-inset-top)); right: 16px; border: 1.5px solid #e6cfa3; border-radius: 99px;
-    background: rgba(255,250,242,.9); color: #8a4a22; font: inherit; font-size: 12px; font-weight: 700; padding: 4px 10px; cursor: pointer; }
-  #voice.off { color: #b49a85; }
+  .hud-btn { position: fixed; top: calc(54px + env(safe-area-inset-top)); z-index: 6;
+    width: 34px; height: 34px; display: grid; place-items: center; padding: 0;
+    border: 1.5px solid #e8d2a6; border-radius: 50%; background: rgba(255,250,242,.94);
+    box-shadow: 0 3px 10px rgba(90,40,15,.16); cursor: pointer;
+    transition: transform .15s, background .15s; -webkit-appearance: none; }
+  .hud-btn:hover { background: #fff; transform: translateY(-1px); }
+  .hud-btn:active { transform: translateY(0) scale(.94); }
+  .hud-btn svg { width: 16px; height: 16px; fill: none; stroke: #a86a3e; stroke-width: 1.9;
+    stroke-linecap: round; stroke-linejoin: round; }
+  .hud-btn.off svg { stroke: #c3ab96; }
+  #voice { right: 16px; }
+  #voice .ic-off, #voice.off .ic-on { display: none; }
+  #voice.off .ic-off { display: block; }
 
   /* 敲木魚進度 */
   #knock { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
@@ -150,12 +165,60 @@
   /* 辦公室的按鈕、提示、同事說話 */
   #officeUI { position: fixed; top: calc(14px + env(safe-area-inset-top)); left: 16px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
   body:not(.office-on) #officeUI, body:not(.office-on) #talk { display: none; }
-  #standBtn { border: 1.5px solid #e6cfa3; border-radius: 99px; background: rgba(255,250,242,.94); color: #8a4a22; font: inherit; font-size: 14px; font-weight: 700;
-    padding: 8px 16px; cursor: pointer; box-shadow: 0 4px 12px rgba(40,60,40,.15); }
-  #standBtn[hidden] { display: none; }
+  /* 起身走走：併進右上角 HUD，排在兩顆圓鈕下面 */
+  #standBtn { position: fixed; top: calc(14px + env(safe-area-inset-top)); right: 16px; z-index: 6;
+    display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 12px;
+    border: 1.5px solid #e8d2a6; border-radius: 99px; background: rgba(255,250,242,.94);
+    color: #8a5230; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 3px 10px rgba(90,40,15,.16); -webkit-appearance: none;
+    transition: transform .15s, background .15s; }
+  #standBtn:hover { background: #fff; transform: translateY(-1px); }
+  #standBtn:active { transform: translateY(0) scale(.96); }
+  #standBtn svg { width: 13px; height: 13px; flex: none; fill: none; stroke: #a86a3e;
+    stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  #standBtn[hidden], body:not(.office-on) #standBtn { display: none; }
   #walkHint { font-size: 12px; color: #3f5a46; background: rgba(255,255,255,.82); padding: 5px 12px; border-radius: 99px; max-width: calc(100vw - 32px); line-height: 1.5; }
   #walkHint:empty { display: none; }
-  #talk { position: fixed; left: 0; top: 0; transform: translate(-50%, -100%); max-width: 210px; width: max-content; padding: 8px 12px; border-radius: 14px;
+  /* 滑過貓或梗圖時跟著游標的小提示 */
+  #hoverTip { position: fixed; z-index: 8; padding: 4px 11px; border-radius: 99px; white-space: nowrap;
+    background: rgba(26,28,34,.84); color: #fff; font-size: 12px; font-weight: 700; letter-spacing: .05em;
+    pointer-events: none; opacity: 0; transform: translate(-50%, -160%); transition: opacity .15s; }
+  #hoverTip.show { opacity: 1; }
+  /* 梗圖點開來看大圖 */
+  #lightbox { position: fixed; inset: 0; z-index: 15; display: none; align-items: center; justify-content: center;
+    padding: 28px; background: rgba(8,10,14,.9); cursor: zoom-out; }
+  #lightbox.show { display: flex; }
+  #lightbox img { max-width: min(92vw, 680px); max-height: 86vh; border-radius: 10px; background: #fff;
+    box-shadow: 0 20px 60px rgba(0,0,0,.55); animation: lbIn .25s ease-out; }
+  @keyframes lbIn { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: scale(1); } }
+  #lightbox .lbClose { position: fixed; top: calc(14px + env(safe-area-inset-top)); right: 16px; width: 34px; height: 34px;
+    display: grid; place-items: center; border-radius: 50%; border: 0; background: rgba(255,255,255,.9);
+    color: #2a2c31; font-size: 18px; font-weight: 700; cursor: pointer; }
+  .plus.heart { color: #e8688c; font-size: 24px; text-shadow: 0 2px 0 #fff; }
+  /* 靈魂出竅時的暗角，做出舞台聚光燈的感覺 */
+  #vignette { position: fixed; inset: 0; z-index: 3; pointer-events: none; opacity: 0; transition: opacity .9s ease;
+    background: radial-gradient(ellipse 40% 34% at 50% 40%, rgba(5,9,15,0) 0%, rgba(5,9,15,.42) 48%, rgba(4,7,12,.88) 100%); }
+  body.soul-dim #vignette { opacity: 1; }
+  /* 自己回的話 */
+  #mytalk { position: fixed; left: 0; top: 0; z-index: 5; transform: translate(-50%, -100%); max-width: 220px; width: max-content;
+    padding: 8px 13px; border-radius: 14px; background: #fff8e8; border: 2px solid #e2c48d; font-size: 15px; font-weight: 700;
+    color: #6a4a2a; line-height: 1.45; pointer-events: none; opacity: 0; transition: opacity .25s; box-shadow: 0 6px 16px rgba(110,70,20,.18); }
+  #mytalk.show { opacity: 1; }
+  #mytalk.cold { background: #f1f1f3; border-color: #cfcfd6; color: #86868f; }
+  #mytalk::after { content: ""; position: absolute; left: 50%; bottom: -9px; width: 14px; height: 14px; background: inherit;
+    border-right: 2px solid #e2c48d; border-bottom: 2px solid #e2c48d; transform: translateX(-50%) rotate(45deg); }
+  #mytalk.cold::after { border-color: #cfcfd6; }
+  /* 敷衍他的選項 */
+  #replies { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 7;
+    display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 28px);
+    opacity: 0; pointer-events: none; transform: translate(-50%, 14px); transition: opacity .25s, transform .25s; }
+  #replies.show { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
+  #replies button { border: 1.5px solid #e8d2a6; border-radius: 99px; background: rgba(255,250,242,.96);
+    color: #6a4a32; font: inherit; font-size: 13.5px; font-weight: 700; padding: 8px 15px; cursor: pointer;
+    box-shadow: 0 3px 10px rgba(90,40,15,.16); transition: transform .12s, background .12s; }
+  #replies button:hover { background: #fff; transform: translateY(-1px); }
+  #replies button.cold { color: #8a8a93; border-color: #d8d8de; }
+  #talk { position: fixed; left: 0; top: 0; z-index: 5; transform: translate(-50%, -100%); max-width: 210px; width: max-content; padding: 8px 12px; border-radius: 14px;
     background: #fffdf8; border: 2px solid #b8c9b0; font-size: 14px; font-weight: 700; color: #33463a; line-height: 1.45; pointer-events: none;
     opacity: 0; transition: opacity .25s; box-shadow: 0 6px 16px rgba(30,50,30,.18); }
   #talk.show { opacity: 1; }
@@ -167,6 +230,30 @@
   #bubble.office::after { border-right-color: #8cc7ff; border-bottom-color: #8cc7ff; }
   #bubble.office { border-color: #8cc7ff; box-shadow: 0 0 0 4px rgba(140,199,255,.25), 0 8px 26px rgba(10,30,70,.35); }
   #bubble.office .who { color: #3f86c9; }
+
+  /* 靈魂唱歌時頭上的 KTV 螢幕 */
+  #ktv { position: fixed; left: 0; top: 0; width: min(58vw, 380px); aspect-ratio: 16 / 10; border-radius: 8px; overflow: hidden;
+    border: 3px solid #0e1a26; box-shadow: 0 12px 34px rgba(0,0,0,.5); opacity: 0; visibility: hidden;
+    transition: opacity .35s; pointer-events: none; z-index: 30; }
+  #ktv.show { opacity: 1; }
+  #ktvBg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+  #ktvGlass { position: absolute; inset: 0; background: linear-gradient(rgba(0,0,0,.3), rgba(0,0,0,0) 36%, rgba(0,0,0,0) 54%, rgba(0,0,0,.45)); }
+  #ktvHead, #ktvSub { position: absolute; inset: 0; display: flex; flex-direction: column; text-align: center; padding: 0 6%; }
+  #ktvHead { align-items: center; justify-content: center; gap: 4%; padding-top: 9%; font-family: "Noto Serif TC", serif; transition: opacity .4s; }
+  #ktvHead .kw { position: absolute; top: 4%; left: 4%; font-family: "Arial Black", "Noto Sans TC", sans-serif; font-style: italic; font-weight: 900;
+    font-size: clamp(13px, 3.4vw, 24px); letter-spacing: .03em; color: #1f3fd0; -webkit-text-stroke: 1px #fff; text-shadow: 0 2px 4px rgba(0,0,0,.55); }
+  #ktvHead .kt { font-weight: 900; font-size: clamp(17px, 4.8vw, 32px); line-height: 1.25; color: #e8243c; -webkit-text-stroke: .8px #fff; text-shadow: 0 2px 6px rgba(0,0,0,.55); }
+  #ktvHead .kc { white-space: pre-line; line-height: 1.55; font-weight: 700; font-size: clamp(10px, 2.5vw, 15px); color: #15b857; -webkit-text-stroke: .6px #fff; text-shadow: 0 2px 5px rgba(0,0,0,.5); }
+  #ktvSub { align-items: stretch; justify-content: flex-end; padding-bottom: 6%; gap: 2px; opacity: 0; transition: opacity .3s;
+    font-family: "Noto Sans TC", sans-serif; }
+  #ktv.sing #ktvHead { opacity: 0; }
+  #ktv.sing #ktvSub { opacity: 1; }
+  #ktvSub span { font-weight: 900; letter-spacing: .03em;
+    text-shadow: -2px 0 #0b1118, 2px 0 #0b1118, 0 -2px #0b1118, 0 2px #0b1118, -2px -2px #0b1118, 2px 2px #0b1118, -2px 2px #0b1118, 2px -2px #0b1118, 0 3px 8px rgba(0,0,0,.6); }
+  #ktvSub .l1 { font-size: clamp(16px, 4.2vw, 28px); text-align: left; }
+  #ktvSub .l1 .on { color: #ffd23f; }
+  #ktvSub .l1 .off { color: #fff; }
+  #ktvSub .l2 { font-size: clamp(12px, 3vw, 19px); color: #e4ecf5; text-align: right; }
 
   /* ---------- 結局（ending.js） ---------- */
   body.ending #standBtn, body.ending #ask, body.ending #bubble, body.ending #knock, body.ending #talk, body.ending #walkHint { display: none !important; }
