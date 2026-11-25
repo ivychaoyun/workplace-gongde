@@ -591,8 +591,9 @@ function setOfficeUI() {
   walkHint.textContent = st === 'walk' ? (HOVER ? '點地板或用 WASD 走路・點同事聊天・點你的電腦回座位' : '點地板走路・點同事聊天・點你的電腦回座位') : '';
   if (st === 'seated' && show.mode === 'idle') askForm.classList.add('show'); else if (st !== 'soul') askForm.classList.remove('show');
 }
-function standUp() {
-  if (OFF.state !== 'seated' || show.mode !== 'idle') return;
+function standUp(force = false) {
+  // force：結局（ending.js）醒來後要直接站起來，不檢查流程狀態
+  if (OFF.state !== 'seated' || (!force && show.mode !== 'idle')) return;
   const me = OFF.me;
   officeScene.attach(me.root);
   me.root.position.set(SEAT_STAND.x, 0, SEAT_STAND.z); me.root.rotation.set(0, 0, 0);
@@ -634,7 +635,7 @@ function playerTick(t, dt, bounce, b) {
     for (const a of me.arms) { a.rotation.x = THREE.MathUtils.lerp(-1.05, -1.55, k); a.rotation.z = -0.35 * a.userData.s; }
     return;
   }
-  if (OFF.state !== 'walk') return;
+  if (OFF.state !== 'walk' || OFF.frozen) return;   // frozen：結局在泡茶、伸懶腰時先不能走
   const pos = me.root.position;
   let mx = 0, mz = 0;
   const K = OFF.keys;
@@ -666,6 +667,7 @@ function playerTick(t, dt, bounce, b) {
 /* ---------- 辦公室：鏡頭（坐著看螢幕／走路跟著你／出竅看靈魂） ---------- */
 const _camP = new THREE.Vector3(), _camT = new THREE.Vector3();
 function camWant() {
+  if (OFF.camShot) return OFF.camShot;   // 結局（ending.js）指定的鏡頭：{ pos, tgt }
   const P = OFF.portrait, st = OFF.state;
   if (st === 'walk') {
     const m = OFF.me ? OFF.me.root.position : SEAT_STAND;
@@ -686,11 +688,11 @@ function camWant() {
 }
 const _headW = new THREE.Vector3();
 function cameraTick(dt) {
-  const v = camWant(), k = OFF.camInit ? 1 - Math.exp(-dt * 3.2) : 1;
+  const v = camWant(), k = OFF.camInit ? 1 - Math.exp(-dt * (OFF.camSpeed ?? 3.2)) : 1;
   OFF.camInit = true;
   ocam.position.lerp(v.pos, k); OFF.look.lerp(v.tgt, k); ocam.lookAt(OFF.look);
   // 坐著是第一人稱，視野放寬才看得到螢幕、鍵盤和手
-  const fovWant = OFF.state === 'seated' ? (OFF.portrait ? 80 : 70) : (OFF.portrait ? 56 : 40);
+  const fovWant = OFF.camFov ?? (OFF.state === 'seated' ? (OFF.portrait ? 80 : 70) : (OFF.portrait ? 56 : 40));
   if (Math.abs(ocam.fov - fovWant) > 0.05) { ocam.fov += (fovWant - ocam.fov) * k; ocam.updateProjectionMatrix(); }
   // 鏡頭貼近自己時把頭藏起來，只留伸向鍵盤的手
   if (OFF.me) {
@@ -742,7 +744,7 @@ addEventListener('keydown', e => {
   const k = e.key.toLowerCase();
   if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) {
     if (OFF.state === 'seated' && show.mode === 'idle') standUp();
-    if (OFF.state === 'walk') { OFF.keys.add(k); e.preventDefault(); }
+    if (OFF.state === 'walk' && show.mode !== 'ending') { OFF.keys.add(k); e.preventDefault(); }   // 結局是自動走路
   }
 });
 addEventListener('keyup', e => OFF.keys.delete(e.key.toLowerCase()));
@@ -1058,3 +1060,5 @@ function soulTick(t) {
 }
 
 export { OFF, buildOffice, ocam, office, officeIntro, officeScene, officeTick, soulExit, soulTick };
+// 結局（ending.js）用的
+export { ME_POS, OBACK, SEAT_STAND, SOUL_HOVER, cupMesh, goTo, holdInHand, sitDown, soulGlow, soulOpacity, soulPose, standUp, woosh };
