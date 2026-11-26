@@ -227,6 +227,180 @@ function sing(text, seconds, pitch = 0.85) {
 }
 // 要提早幾拍送出，才會剛好在小節第 1 拍開口
 const singLead = () => Math.min(voice.lat, 0.6) / SPB();
+/* ---------- 心經配樂（第三幕「心經」修行用，原創合成，不用任何錄音） ----------
+   五種輕柔風格（鋼琴、豎琴、電鋼琴、弦樂），每句經文兩小節，小師父在第 1 拍開口唸，每句開頭一聲輕木魚。
+   音樂帶著字走：卷軸要亮哪一行，由這裡用 onLine(i) 通知，不要另外用計時器。
+   用法（temple-practice.js 的 openSutra）：
+     startSutra(SUTRA, { onLine: i => 亮第 i 行, onEnd: () => 唸完了 });
+     「下一句」按鈕 → sutraNext()；收起 → stopSutra(false)
+   五種風格在 SUTRA_STYLES，每次隨機挑一種；想指定就傳 { style: 'zen' }。startSutra 會回傳挑到的風格。 */
+const SUTRA_INTRO = 2, SUTRA_BARS_PER_LINE = 2, SUTRA_OUTRO = 2;
+// 五種風格，每次打開隨機挑一種（不會連續同一種）。全部輕柔、沒有重鼓，主角樂器各不同。
+// chords：每小節一個和弦，四小節一輪，第一個音是低音
+// 節奏一小節 16 格：
+//   comp 和弦伴奏（compInst：'piano' 鋼琴、'ep' 電鋼琴）
+//   arp  分解和弦，一格一個音（arpInst：'piano' 鋼琴、'harp' 豎琴）
+//   bass 低音（bassInst：'piano' 輕鋼琴低音、'cello' 大提琴長音）
+//   strings: true＝弦樂長音鋪底，每小節換和弦
+//   shaker 沙鈴、brush 輕刷、snap 彈指、kick 很輕的大鼓
+const SUTRA_STYLES = [
+  { id: 'piano', name: '晨光鋼琴', bpm: 96,
+    chords: [['D3', 'A3', 'C#4', 'F#4'], ['B2', 'F#3', 'A3', 'D4'], ['G2', 'D3', 'F#3', 'B3'], ['A2', 'E3', 'G3', 'C#4']],
+    comp: '...x..x...x.....', compInst: 'piano', bass: 'x.......x.......', bassInst: 'piano', shaker: '..x...x...x...x.', brush: '....x.......x...' },
+  { id: 'harp', name: '海邊豎琴', bpm: 92,
+    chords: [['G2', 'D3', 'B3', 'F#4'], ['E2', 'B2', 'G3', 'D4'], ['C3', 'G3', 'B3', 'E4'], ['D3', 'A3', 'B3', 'F#4']],
+    arp: 'x.x.x.x.x.x.x.x.', arpInst: 'harp', strings: true },
+  { id: 'lofi', name: '午後 lo-fi', bpm: 88,
+    chords: [['F2', 'A3', 'C4', 'E4'], ['E2', 'G3', 'B3', 'D4'], ['D2', 'F3', 'A3', 'C4'], ['C2', 'E3', 'G3', 'B3']],
+    comp: 'x.....x...x.....', compInst: 'ep', bass: 'x.........x.....', bassInst: 'piano', snap: '....x.......x...', kick: 'x.........x.....', shaker: 'x.x.x.x.x.x.x.x.' },
+  { id: 'strings', name: '禪意弦樂', bpm: 90,
+    chords: [['A2', 'E3', 'G3', 'C4'], ['F2', 'C3', 'E3', 'A3'], ['C3', 'G3', 'B3', 'E4'], ['G2', 'D3', 'E3', 'B3']],
+    strings: true, bass: 'x...............', bassInst: 'cello', arp: 'x.......x.......', arpInst: 'piano' },
+  { id: 'neosoul', name: '雨天 neo-soul', bpm: 90,
+    chords: [['E2', 'G#3', 'B3', 'D#4', 'F#4'], ['C#2', 'E3', 'G#3', 'B3', 'D#4'], ['A2', 'C#3', 'G#3', 'B3', 'E4'], ['B2', 'A3', 'C#4', 'E4', 'F#4']],
+    comp: 'x.......x.x.....', compInst: 'ep', strings: true, bass: 'x.....x.........', bassInst: 'piano', snap: '....x.......x...', brush: '..x...x...x...x.' },
+];
+const sutra = { on: false, lastStyle: null };
+function pickSutraStyle(id) {
+  let pool = SUTRA_STYLES.filter(st => !id || st.id === id);
+  if (!id && pool.length > 1) pool = pool.filter(st => st.id !== sutra.lastStyle);
+  const st = pool[Math.floor(Math.random() * pool.length)] || SUTRA_STYLES[0];
+  sutra.lastStyle = st.id;
+  return st;
+}
+// 共用：一個振盪器接到心經的總線
+function sOsc(type, f, t, end, gainNode, detune = 0) {
+  const o = audio.ctx.createOscillator(); o.type = type; o.frequency.value = f; o.detune.value = detune;
+  o.connect(gainNode); o.start(t); o.stop(end + 0.05); return o;
+}
+// 鋼琴：柔和的槌擊，泛音少、慢慢消失（低音消失得慢）
+function softPiano(t, f, a = 0.06) {
+  const { ctx } = audio, g = ctx.createGain(), lp = ctx.createBiquadFilter(), dur = f < 200 ? 2.6 : f < 500 ? 2 : 1.5;
+  lp.type = 'lowpass'; lp.frequency.setValueAtTime(Math.min(f * 6, 6000), t); lp.frequency.exponentialRampToValueAtTime(Math.max(f * 2, 300), t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(a, t + 0.006); g.gain.exponentialRampToValueAtTime(a * 0.35, t + 0.25); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  g.connect(lp).connect(sutra.bus);
+  const h2 = ctx.createGain(); h2.gain.value = 0.35; h2.connect(g);
+  const h3 = ctx.createGain(); h3.gain.value = 0.12; h3.connect(g);
+  sOsc('sine', f, t, t + dur, g); sOsc('sine', f, t, t + dur, g, 3);
+  sOsc('sine', f * 2, t, t + dur, h2); sOsc('sine', f * 3, t, t + dur, h3);
+}
+// 電鋼琴：圓潤、帶一點鐘聲感
+function softEP(t, f, a = 0.045) {
+  const { ctx } = audio, g = ctx.createGain(), bell = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(a, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
+  bell.gain.value = 0.12; g.connect(sutra.bus); bell.connect(g);
+  sOsc('sine', f, t, t + 1.8, g); sOsc('sine', f * 2.002, t, t + 1.8, bell);
+}
+// 豎琴：清亮的撥弦，比吉他輕、高
+function harp(t, f, a = 0.07) {
+  const { ctx } = audio, g = ctx.createGain(), h = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(a, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
+  h.gain.value = 0.25; g.connect(sutra.bus); h.connect(g);
+  sOsc('triangle', f, t, t + 1.6, g); sOsc('sine', f * 2, t, t + 0.6, h);
+}
+// 弦樂：幾把小提琴、中提琴一起拉長音，慢慢進來、慢慢退
+function strings(t, notes, len) {
+  const { ctx } = audio, lp = ctx.createBiquadFilter(), g = ctx.createGain();
+  lp.type = 'lowpass'; lp.frequency.value = 2600; lp.Q.value = 0.5;
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.014, t + len * 0.3); g.gain.linearRampToValueAtTime(0.011, t + len * 0.8); g.gain.linearRampToValueAtTime(0.0001, t + len * 1.08);
+  lp.connect(g).connect(sutra.bus);
+  for (const n of notes.slice(1)) {
+    const f = noteHz(n) * UP;
+    for (const d of [-7, 0, 7]) sOsc('sawtooth', f, t, t + len * 1.1, lp, d); // 三把琴稍微不同音準，聽起來像一群人
+  }
+}
+// 大提琴：低音長音，慢慢拉出來
+function cello(t, f, len) {
+  const { ctx } = audio, lp = ctx.createBiquadFilter(), g = ctx.createGain();
+  lp.type = 'lowpass'; lp.frequency.value = 500;
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.025, t + 0.5); g.gain.linearRampToValueAtTime(0.0001, t + len);
+  lp.connect(g).connect(sutra.bus);
+  sOsc('sawtooth', f, t, t + len, lp, -4); sOsc('sawtooth', f, t, t + len, lp, 4);
+}
+// 和弦都往上彈一個八度（UP），聲音比較輕、比較透，不會悶
+const UP = 2;
+const SUTRA_INST = {
+  piano: (t, notes, a) => notes.forEach((n, i) => softPiano(t + i * 0.012, noteHz(n) * UP, a)),
+  ep: (t, notes, a) => notes.forEach((n, i) => softEP(t + i * 0.01, noteHz(n) * UP, a)),
+  harp: (t, notes, a) => notes.forEach(n => harp(t, noteHz(n) * UP * 2, a)),
+};
+function sutraStep(step, t) {
+  const st = sutra.style, s = step % 16, bar = Math.floor(step / 16), sd = (60 / st.bpm) / 4;
+  if (s % 2 === 1) t += sd * 0.14; // 一點點搖擺
+  const ch = st.chords[bar % st.chords.length], up = ch.slice(1);
+  const at = (p) => p && p[s] && p[s] !== '.';
+  if (s === 0 && st.strings) strings(t, ch, sd * 16);
+  if (at(st.bass)) {
+    if (st.bassInst === 'cello') cello(t, noteHz(ch[0]), sd * 15);
+    else softPiano(t, noteHz(ch[0]) * 2 * (s === 8 ? 1.5 : 1), 0.022); // 低音也輕輕的，往上一個八度
+  }
+  if (at(st.comp)) SUTRA_INST[st.compInst || 'piano'](t, up, st.compInst === 'ep' ? 0.04 : 0.035);
+  if (at(st.arp)) {
+    // 第幾個音：這一格前面打了幾下；單數小節往下彈，雙數小節往上彈
+    const k = [...st.arp.slice(0, s)].filter(c => c !== '.').length, seq = bar % 2 ? [...up].reverse() : up;
+    const n = seq[k % seq.length];
+    SUTRA_INST[st.arpInst || 'piano'](t, [n], st.arpInst === 'harp' ? 0.07 : 0.06);
+  }
+  if (at(st.shaker)) noise(t, s % 4 === 2 ? 0.02 : 0.011, 0.05, 'bandpass', 5500, 1.5);
+  if (at(st.brush)) noise(t, 0.03, 0.12, 'bandpass', 1800, 0.8);
+  if (at(st.snap)) noise(t, 0.08, 0.04, 'bandpass', 2200, 3);
+  if (at(st.kick)) tone('sine', 95, 45, t, 0.1, 0.22);
+}
+function startSutra(lines, { onLine, onEnd, style } = {}) {
+  ensureAudio(); stopSutra(false);
+  const st = pickSutraStyle(style);
+  const { ctx } = audio, t = ctx.currentTime + 0.15, bar = 4 * 60 / st.bpm;
+  const bus = ctx.createGain(); bus.gain.value = 0.95;
+  const delay = ctx.createDelay(1), fb = ctx.createGain(), lp = ctx.createBiquadFilter(), wet = ctx.createGain();
+  delay.delayTime.value = 0.3; fb.gain.value = 0.25; lp.type = 'lowpass'; lp.frequency.value = 2200; wet.gain.value = 0.22;
+  bus.connect(audio.out); bus.connect(delay); delay.connect(lp).connect(fb).connect(delay); delay.connect(wet).connect(audio.out);
+  Object.assign(sutra, { on: true, style: st, bus, fx: [delay, fb, lp, wet], lines, onLine, onEnd, t0: t, bar, step: 0, next: t,
+    i: 0, lineAt: t + SUTRA_INTRO * bar, sung: -1, endAt: 0 });
+  bowl(t);
+  sutra.timer = setInterval(sutraTick, 25); sutraTick();
+  return st;
+}
+function sutraTick() {
+  if (!sutra.on) return;
+  const now = audio.ctx.currentTime, sd = (60 / sutra.style.bpm) / 4;
+  while (sutra.next < now + 0.15) { sutraStep(sutra.step, sutra.next); sutra.next += sd; sutra.step++; }
+  const { lines } = sutra;
+  if (sutra.i < lines.length) {
+    // 提早一點送出語音（開口延遲），剛好在小節第 1 拍唸出來
+    if (sutra.sung !== sutra.i && now >= sutra.lineAt - Math.min(voice.lat, 0.6)) {
+      sutra.sung = sutra.i;
+      woodfish(Math.max(sutra.lineAt, now), 0.22);
+      sing(lines[sutra.i].replace(/[，。、：；！]/g, ' ').trim(), sutra.bar * SUTRA_BARS_PER_LINE * 0.82, 0.85);
+    }
+    if (now >= sutra.lineAt) {
+      sutra.onLine && sutra.onLine(sutra.i);
+      sutra.i++; sutra.lineAt += sutra.bar * SUTRA_BARS_PER_LINE;
+      if (sutra.i >= lines.length) sutra.endAt = sutra.lineAt + SUTRA_OUTRO * sutra.bar;
+    }
+  } else if (now >= sutra.endAt) {
+    const cb = sutra.onEnd; stopSutra(true); cb && cb();
+  }
+}
+// 「下一句」：下一行改在下一個小節開頭進來（不會打亂節奏）
+function sutraNext() {
+  if (!sutra.on || sutra.i >= sutra.lines.length) return;
+  const now = audio.ctx.currentTime, nextBar = sutra.t0 + Math.ceil((now - sutra.t0 + 0.05) / sutra.bar) * sutra.bar;
+  if (nextBar < sutra.lineAt) sutra.lineAt = nextBar;
+}
+// final：true＝唸完了，最後一個和弦＋磬再淡出；false＝中途收起，直接淡出
+function stopSutra(final = true) {
+  if (!sutra.bus) return;
+  clearInterval(sutra.timer);
+  const { ctx } = audio, t = ctx.currentTime, bus = sutra.bus, fx = sutra.fx;
+  let fade = 1;
+  if (final && sutra.on) { const c = sutra.style.chords[0]; SUTRA_INST.piano(t + 0.05, c, 0.045); bowl(t + 0.05); fade = 4; }
+  else if (synth) synth.cancel();
+  bus.gain.cancelScheduledValues(t); bus.gain.setValueAtTime(bus.gain.value, t);
+  bus.gain.setValueAtTime(bus.gain.value, t + fade - 0.8); bus.gain.exponentialRampToValueAtTime(0.0001, t + fade);
+  setTimeout(() => { try { bus.disconnect(); fx.forEach(n => n.disconnect()); } catch (e) { /* 已經斷開 */ } }, (fade + 2.5) * 1000);
+  Object.assign(sutra, { on: false, bus: null, fx: null, onLine: null, onEnd: null });
+}
+
 const voiceBtn = document.getElementById('voice');
 function drawVoiceBtn() { voiceBtn.textContent = voice.on ? '人聲 開' : '人聲 關'; voiceBtn.classList.toggle('off', !voice.on); }
 voiceBtn.addEventListener('click', () => {
@@ -236,4 +410,4 @@ voiceBtn.addEventListener('click', () => {
 });
 drawVoiceBtn();
 
-export { BEATS, SPB, singLead, WAITING_BEAT, audio, beatPos, bowl, ensureAudio, noise, pickBeat, sing, startBeat, stopBeat, synth, tone, voice, woodfish };
+export { BEATS, SPB, singLead, WAITING_BEAT, audio, beatPos, bowl, ensureAudio, noise, pickBeat, sing, startBeat, SUTRA_STYLES, startSutra, stopBeat, stopSutra, sutraNext, synth, tone, voice, woodfish };
