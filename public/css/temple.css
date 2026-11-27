@@ -1,0 +1,136 @@
+/* 第三幕：互動提示、名稱牌、字卡、今日修行與離開提示、山門方向、三個修行畫面。由 temple-spots.js 載入。
+   主要負責：安淇（foraianother8-ann） */
+
+/* 靠近物件時的提示：畫面下方中間，手機上可以直接點 */
+#spotPrompt { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 6;
+  transform: translate(-50%, 12px); opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s;
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px 8px 16px; border-radius: 999px; cursor: pointer;
+  border: 2px solid var(--gold); background: rgba(255,250,242,.97); color: var(--ink); font: 700 16px/1.3 "Noto Sans TC", sans-serif;
+  box-shadow: 0 6px 18px rgba(110,50,20,.22); white-space: nowrap; }
+#spotPrompt.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+#spotPrompt kbd { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 6px; font: 900 14px/1 "Noto Sans TC", sans-serif;
+  color: #fff4dc; background: linear-gradient(#c23c30, #9a2722); box-shadow: 0 2px 0 #6a1a14; }
+#spotPrompt em { font-style: normal; font-size: 14px; color: #8a4a22; padding-right: 6px; }
+
+/* 名稱牌：常駐在每個互動物件上方 */
+.spot-tag { position: fixed; left: 0; top: 0; z-index: 4; pointer-events: none; opacity: 0; transition: opacity .3s;
+  padding: 4px 12px 5px; border-radius: 8px; white-space: nowrap;
+  font: 900 15px/1.2 "Noto Serif TC", serif; letter-spacing: .12em; color: #fff4dc;
+  background: linear-gradient(#b8352d, #8e231f); border: 1.5px solid var(--gold); box-shadow: 0 3px 10px rgba(80,20,10,.3); }
+.spot-tag::after { content: ""; position: absolute; left: 50%; bottom: -6px; width: 8px; height: 8px; background: #8e231f;
+  border-right: 1.5px solid var(--gold); border-bottom: 1.5px solid var(--gold); transform: translateX(-50%) rotate(45deg); }
+.spot-tag.show { opacity: 1; }
+.spot-tag.near { box-shadow: 0 0 0 3px rgba(255,215,122,.6), 0 3px 10px rgba(80,20,10,.3); }
+.spot-tag.done::before { content: "✓ "; color: #ffd77a; }
+/* 山門：跟修行點不同的顏色 */
+.spot-tag.exit { color: #1f3d33; background: linear-gradient(#f4fbff, #d6eef8); border-color: #7fb8cc; font-size: 16px; }
+.spot-tag.exit::after { background: #d6eef8; border-color: #7fb8cc; }
+
+/* 山門在畫面外的方向提示 */
+#gateArrow { position: fixed; left: 12px; top: 50%; z-index: 5; transform: translateY(-50%); pointer-events: none;
+  padding: 6px 12px; border-radius: 999px; background: rgba(31,61,51,.78); color: #eaf7fb; font: 700 13px/1.3 "Noto Sans TC", sans-serif;
+  opacity: 0; transition: opacity .4s; white-space: nowrap; }
+#gateArrow.right { left: auto; right: 12px; }
+#gateArrow.show { opacity: .9; }
+
+/* 字卡：浮在畫面中上方 */
+#templeCaption { position: fixed; left: 50%; top: 24%; z-index: 6; transform: translate(-50%, 8px); opacity: 0; pointer-events: none;
+  transition: opacity .8s, transform .8s; width: max-content; max-width: calc(100vw - 32px); text-align: center; white-space: pre-line;
+  font-family: "Noto Serif TC", serif; font-weight: 900; font-size: clamp(19px, 5vw, 28px); letter-spacing: .1em; line-height: 1.6;
+  color: #fffaf0; text-shadow: 0 2px 12px rgba(60,20,10,.8), 0 0 2px rgba(60,20,10,.9); }
+#templeCaption.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* 右上角：今日修行＋離開提示 */
+#templeSide { position: fixed; top: calc(92px + env(safe-area-inset-top)); right: 16px; z-index: 5; width: 204px;
+  display: grid; gap: 8px; pointer-events: none; opacity: 0; transform: translateX(12px); transition: opacity .5s, transform .5s; }
+#templeSide.show { opacity: 1; transform: none; }
+#templeSide.show.busy { opacity: 0; transform: translateX(12px); }
+#practice { padding: 10px 14px; border-radius: 12px; background: rgba(255,250,242,.94); border: 1.5px solid #e6cfa3;
+  box-shadow: 0 4px 12px rgba(110,50,20,.12); color: #8a4a22; font-size: 14px; }
+#practice b { display: block; font-family: "Noto Serif TC", serif; font-weight: 900; font-size: 15px; letter-spacing: .15em; color: var(--red); margin-bottom: 4px; }
+#practice ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; }
+#practice li { font-weight: 700; color: var(--ink); }
+#practice li::before { content: "□"; margin-right: 5px; color: #b48a5e; }
+#practice li.done { color: #9a7a60; }
+#practice li.done::before { content: "☑"; color: var(--red); }
+#leaveTip { padding: 10px 14px; border-radius: 12px; background: rgba(31,61,51,.9); color: #f2fbf7; box-shadow: 0 4px 12px rgba(20,40,30,.25);
+  display: grid; gap: 3px; }
+#leaveTip b { font-size: 15px; font-weight: 700; line-height: 1.4; }
+#leaveTip span { font-size: 13px; line-height: 1.4; color: #cfeee2; }
+
+/* 三個修行的畫面 */
+#practiceBox { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 8;
+  width: min(calc(100vw - 24px), 420px); max-height: calc(100vh - 140px); box-sizing: border-box; display: none; flex-direction: column;
+  padding: 14px 16px 16px; border-radius: 18px; background: rgba(255,250,242,.97); border: 2px solid #e2c48d;
+  box-shadow: 0 12px 32px rgba(80,30,10,.3); transform: translateX(-50%); }
+#practiceBox.show { display: flex; animation: pbIn .3s ease-out; }
+@keyframes pbIn { from { opacity: 0; transform: translate(-50%, 16px); } }
+.pb-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.pb-title { font-family: "Noto Serif TC", serif; font-weight: 900; font-size: 19px; color: var(--ink); letter-spacing: .05em; }
+.pb-close { margin-left: auto; border: 1.5px solid #e6cfa3; border-radius: 99px; padding: 6px 12px; font: inherit; font-size: 13px; font-weight: 700;
+  background: #fffaf2; color: #8a4a22; cursor: pointer; }
+.pb-body { display: flex; flex-direction: column; align-items: center; gap: 10px; min-height: 0; }
+.hold-btn, .next-btn { border: none; border-radius: 99px; padding: 14px 26px; font: 700 16px/1 "Noto Sans TC", sans-serif; cursor: pointer;
+  color: #fff4dc; background: linear-gradient(#c23c30, #9a2722); box-shadow: 0 5px 0 #6a1a14; touch-action: none; user-select: none; -webkit-user-select: none; }
+.hold-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #6a1a14; }
+.hold-btn[hidden], .next-btn[hidden] { display: none; }
+
+/* 靜坐：呼吸圓 */
+.breath { --k: .42; width: 180px; height: 180px; border-radius: 50%; display: grid; place-items: center; transform: scale(var(--k));
+  background: radial-gradient(circle at 50% 45%, rgba(255,236,190,.95), rgba(233,180,82,.75) 60%, rgba(192,57,43,.55));
+  box-shadow: 0 0 40px rgba(233,180,82,.55); }
+.breath-word { font-family: "Noto Serif TC", serif; font-weight: 900; font-size: 30px; color: #6a2416; transform: scale(calc(1 / var(--k))); white-space: nowrap; }
+.breath-line { margin: 0; min-height: 1.5em; font-size: 15px; font-weight: 700; color: #6b4a36; text-align: center; }
+.breath-dots { display: flex; gap: 8px; }
+.breath-dots span { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #c79a52; }
+.breath-dots span.on { background: #c0392b; border-color: #c0392b; }
+
+/* 心經：卷軸 */
+#practiceBox.sutra .pb-body { align-items: stretch; }
+.scroll { height: min(46vh, 340px); overflow-y: auto; padding: 14px 18px; border-radius: 6px;
+  background: linear-gradient(90deg, #d9bf88, #f6ead0 6%, #f8eedb 94%, #d9bf88); border-top: 8px solid #7a3a1a; border-bottom: 8px solid #7a3a1a;
+  font-family: "Noto Serif TC", serif; animation: unroll .6s ease-out; }
+@keyframes unroll { from { clip-path: inset(48% 0 48% 0); } to { clip-path: inset(0 0 0 0); } }
+.sutra-line { margin: 0 0 10px; font-size: 17px; line-height: 1.7; color: rgba(74,42,30,.28); transition: color .6s; }
+.sutra-line.lit { color: #4a2a1e; }
+.sutra-line.now { color: #a8302a; font-weight: 900; }
+.sutra-end { margin: 0; text-align: center; font-family: "Noto Serif TC", serif; font-weight: 900; font-size: 17px; color: var(--red); opacity: 0; transition: opacity .8s; }
+.sutra-end.show { opacity: 1; }
+#practiceBox.sutra .next-btn { align-self: center; padding: 11px 22px; font-size: 15px; }
+
+/* 抽籤：籤筒、掉下來的籤、籤詩 */
+.lot-stage { position: relative; height: 170px; width: 100%; display: grid; place-items: end center; transition: height .4s; }
+.lot-stage.small { height: 90px; }
+.lot-stage.small .lot-tube { transform: scale(.55); transform-origin: bottom center; }
+.lot-tube { position: relative; width: 74px; height: 110px; transform-origin: bottom center; }
+.lot-tube i { position: absolute; bottom: 60px; left: calc(14px + var(--n) * 5.5px); width: 5px; height: 74px; border-radius: 2px;
+  background: #ead39b; border: 1px solid #b8964f; transform: rotate(calc((var(--n) - 4) * 3deg)); transform-origin: bottom center; }
+.lot-body { position: absolute; inset: 0; border-radius: 10px 10px 14px 14px;
+  background: linear-gradient(90deg, #a87a3a, #e2bd76 40%, #c79a52 70%, #8f6430); border: 2px solid #7a3a1a; box-shadow: 0 6px 0 rgba(80,40,20,.25); }
+.lot-body::before, .lot-body::after { content: ""; position: absolute; left: -2px; right: -2px; height: 7px; background: #7a3a1a; border-radius: 3px; }
+.lot-body::before { top: 16px; } .lot-body::after { bottom: 18px; }
+.lot-label { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font: 900 26px/1 "Noto Serif TC", serif; color: #7a1d1a; }
+.lot-tube.shake { animation: lotShake .16s linear infinite; }
+@keyframes lotShake { 0% { transform: rotate(-9deg); } 50% { transform: rotate(9deg) translateY(-4px); } 100% { transform: rotate(-9deg); } }
+.lot-stick { position: absolute; left: 50%; bottom: 120px; width: 7px; height: 70px; margin-left: -3px; border-radius: 2px; opacity: 0;
+  background: #ead39b; border: 1px solid #b8964f; }
+.lot-stick.fall { animation: lotFall .9s cubic-bezier(.4,0,.6,1) forwards; }
+@keyframes lotFall { 0% { opacity: 1; transform: translateY(0) rotate(0); } 60% { opacity: 1; transform: translate(40px, 110px) rotate(80deg); } 100% { opacity: 0; transform: translate(46px, 112px) rotate(90deg); } }
+.lot-tip { margin: 0; min-height: 1.4em; font-size: 14px; color: #6b4a36; text-align: center; }
+.lot-slip { display: none; width: 100%; box-sizing: border-box; padding: 14px; border-radius: 8px; text-align: center;
+  background: #f6ead0; border: 1.5px solid #d9b77a; font-family: "Noto Serif TC", serif; color: var(--ink); }
+.lot-slip.show { display: block; animation: unroll .7s ease-out; }
+.lot-slip b { display: block; color: var(--red); font-size: 20px; letter-spacing: .3em; margin-bottom: 6px; }
+.lot-slip p { margin: 4px 0; font-size: 17px; }
+.lot-slip .note { margin-top: 8px; font-size: 15px; color: #8a4a22; }
+
+@media (max-width: 420px) {
+  #templeSide { top: calc(88px + env(safe-area-inset-top)); width: 172px; }
+  #templeCaption { top: auto; bottom: calc(22% + env(safe-area-inset-bottom)); }
+  #practice, #leaveTip { padding: 8px 10px; }
+  #practice { font-size: 13px; }
+  #leaveTip b { font-size: 13px; }
+  #leaveTip span { font-size: 12px; }
+  .spot-tag { font-size: 14px; padding: 3px 10px 4px; }
+  .breath { width: 150px; height: 150px; }
+}

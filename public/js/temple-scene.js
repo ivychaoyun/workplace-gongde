@@ -302,8 +302,12 @@ function buildCushions() {
   const round = lathe([[0, 0], [0.4, 0], [0.46, 0.05], [0.47, 0.1], [0.44, 0.16], [0.36, 0.2], [0, 0.21]], 28);
   const rm = mat('#c94a3c', { roughness: 0.85 });
   const spots = [];
-  for (const z of [-2.0, -0.2, 1.6]) for (const x of [-5.0, -3.7, -2.4, 2.4, 3.7, 5.0]) spots.push([x, z]);
-  spots.push([-2.4, 3.3], [2.4, 3.3], [3.7, 3.3]);
+  // 前排中間留給修行區與山門（temple-spots.js），不放裝飾蒲團
+  for (const z of [-2.0, -0.2, 1.6]) for (const x of [-5.0, -3.7, -2.4, 2.4, 3.7, 5.0]) {
+    if (z === 1.6 && Math.abs(x) < 4) continue;
+    if (z === -0.2 && (x === -2.4 || x === -3.7)) continue; // 山門
+    spots.push([x, z]);
+  }
   for (const [x, z] of spots) mesh(round, rm, scene, x, 0, z);
 }
 
