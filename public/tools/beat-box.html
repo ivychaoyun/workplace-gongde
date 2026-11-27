@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@900&display=swap" rel="stylesheet">
   <style>
     :root {
+      color-scheme: light;
       --paper: #f6efe2;
       --card: #fffaf1;
       --ink: #2b2420;
@@ -25,7 +26,7 @@
     h1 { margin: 0; font-family: var(--serif); font-size: 30px; }
     .lede { margin: 4px 0 20px; color: var(--ink-soft); font-size: 14px; }
     .bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 20px; }
-    button { font: inherit; cursor: pointer; border: 2px solid var(--line); background: #fff; border-radius: 10px; padding: 6px 12px; }
+    button { font: inherit; cursor: pointer; border: 2px solid var(--line); background: #fff; color: var(--ink); border-radius: 10px; padding: 6px 12px; }
     button:hover { border-color: var(--red); }
     .stop { background: var(--ink); color: #fff; border-color: var(--ink); }
     .now { font-size: 14px; color: var(--ink-soft); }
@@ -38,6 +39,14 @@
     .beat small { color: var(--ink-soft); font-size: 12px; }
     .beat.on { background: var(--gold); border-color: var(--red); }
     pre { background: #fff; border: 2px solid var(--line); border-radius: 10px; padding: 12px; font-size: 13px; overflow-x: auto; }
+    .sutra { background: var(--card); border: 2px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 20px; }
+    .sutra h2 { margin: 0 0 4px; font-size: 16px; color: var(--red); }
+    .sutra .note { margin: 0 0 10px; font-size: 13px; color: var(--ink-soft); }
+    .sutra .scroll { max-height: 210px; overflow-y: auto; background: #fff; border: 2px solid var(--line); border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; }
+    .sutra .scroll p { margin: 4px 0; font-family: var(--serif); font-size: 17px; color: #c9bba6; transition: color .4s; }
+    .sutra .scroll p.lit { color: var(--ink); }
+    .sutra .scroll p.now { color: var(--red); }
+    .sutra .row { display: flex; gap: 8px; flex-wrap: wrap; }
   </style>
 </head>
 <body>
@@ -48,6 +57,19 @@
     <button class="stop" id="stop" type="button">■ 停止</button>
     <span class="now" id="now">還沒播放</span>
   </div>
+  <section class="sutra">
+    <h2>📜 心經配樂（第三幕・安淇的卷軸）</h2>
+    <p class="note">五種輕柔的風格，網站裡每次隨機挑一種。前奏兩小節後開始唸，每句兩小節、在第 1 拍開口，每句開頭一聲木魚；卷軸跟著音樂亮。「下一句」會在下一個小節進來，不會打亂節奏。</p>
+    <div class="row" id="sutraStyles" style="margin-bottom:10px"></div>
+    <p class="note" id="sutraNow" style="font-weight:700;color:var(--red)">還沒播放</p>
+    <div class="scroll" id="sutraScroll"></div>
+    <div class="row">
+      <button type="button" id="sutraStart">▶ 隨機一種開始唸</button>
+      <label style="font-size:14px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="sutraShort" checked> 只唸前 8 句（約 45 秒）</label>
+      <button type="button" id="sutraNext">下一句</button>
+      <button type="button" id="sutraStop">收起（中途）</button>
+    </div>
+  </section>
   <div class="grid" id="grid"></div>
   <h2 style="font-size:15px;margin-top:24px">目前這首的設定</h2>
   <pre id="code">（點一首節拍）</pre>
@@ -55,7 +77,7 @@
   <button id="voice" type="button" hidden></button>
 </main>
 <script type="module">
-  import { BEATS, audio, ensureAudio, pickBeat, startBeat, stopBeat } from '../js/audio.js';
+  import { BEATS, SUTRA_STYLES, audio, ensureAudio, pickBeat, startBeat, startSutra, stopBeat, stopSutra, sutraNext } from '../js/audio.js';
 
   const NAMES = { guess: '猜主管想法', revise: '反覆改稿', rush: '臨時加單', firefight: '救火接手', leave: '休假被找', other: '其他鳥事' };
   const grid = document.getElementById('grid'), now = document.getElementById('now'), code = document.getElementById('code');
@@ -63,6 +85,7 @@
 
   function play(beat) {
     ensureAudio();
+    clearInterval(timer); stopSutra(false); // 正在試聽心經的話先收起
     startBeat(beat);
     buttons.forEach((b, id) => b.classList.toggle('on', id === beat.id));
     now.innerHTML = `正在播：<b>${beat.name}</b>（${beat.id}，${beat.bpm} BPM）`;
@@ -88,6 +111,40 @@
     stopBeat(); buttons.forEach(b => b.classList.remove('on')); now.textContent = '已停止';
   };
   window.__beatbox = { audio }; // 給自動測試用
+
+  // ---------- 心經：模擬 temple-practice.js 的 openSutra ----------
+  const SUTRA = ['觀自在菩薩，行深般若波羅蜜多時，', '照見五蘊皆空，度一切苦厄。', '舍利子，色不異空，空不異色，', '色即是空，空即是色，受想行識，亦復如是。',
+    '舍利子，是諸法空相，不生不滅，', '不垢不淨，不增不減。', '是故空中無色，無受想行識，', '無眼耳鼻舌身意，無色聲香味觸法，', '無眼界，乃至無意識界。',
+    '無無明，亦無無明盡，', '乃至無老死，亦無老死盡。', '無苦集滅道，無智亦無得。', '以無所得故，菩提薩埵，', '依般若波羅蜜多故，心無罣礙。', '無罣礙故，無有恐怖，', '遠離顛倒夢想，究竟涅槃。',
+    '三世諸佛，依般若波羅蜜多故，', '得阿耨多羅三藐三菩提。', '故知般若波羅蜜多，是大神咒，是大明咒，', '是無上咒，是無等等咒，', '能除一切苦，真實不虛。',
+    '故說般若波羅蜜多咒，即說咒曰：', '揭諦揭諦，波羅揭諦，', '波羅僧揭諦，菩提薩婆訶。'];
+  const sc = document.getElementById('sutraScroll');
+  let lines = [], timer = 0; // timer 留著給 play() 用
+  function draw(n) {
+    sc.replaceChildren();
+    lines = SUTRA.slice(0, n).map(t => { const p = document.createElement('p'); p.textContent = t; sc.append(p); return p; });
+  }
+  const shortBox = document.getElementById('sutraShort');
+  draw(shortBox.checked ? 8 : SUTRA.length);
+  shortBox.onchange = () => { stopSutra(false); draw(shortBox.checked ? 8 : SUTRA.length); };
+  function light(i) {
+    lines.forEach((l, k) => { l.classList.toggle('lit', k < i); l.classList.toggle('now', k === i); });
+    if (lines[i]) sc.scrollTo({ top: lines[i].offsetTop - sc.offsetTop - sc.clientHeight / 2, behavior: 'smooth' });
+  }
+  const sutraNow = document.getElementById('sutraNow');
+  function runSutra(style) {
+    stopBeat(); buttons.forEach(b => b.classList.remove('on'));
+    draw(shortBox.checked ? 8 : SUTRA.length);
+    const st = startSutra(lines.map(l => l.textContent), { style, onLine: light, onEnd: () => { lines.forEach(l => { l.classList.add('lit'); l.classList.remove('now'); }); sutraNow.textContent = `〈${st.name}〉唸完了`; } });
+    sutraNow.textContent = `正在播：〈${st.name}〉${st.bpm} BPM`;
+  }
+  document.getElementById('sutraStart').onclick = () => runSutra();
+  for (const st of SUTRA_STYLES) {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = st.name;
+    b.onclick = () => runSutra(st.id); document.getElementById('sutraStyles').append(b);
+  }
+  document.getElementById('sutraNext').onclick = () => sutraNext();
+  document.getElementById('sutraStop').onclick = () => { stopSutra(false); sutraNow.textContent = '已收起'; };
 </script>
 </body>
 </html>
