@@ -23,12 +23,18 @@
   <div id="soulWrap"><img id="soul" src="assets/office/soul_c.jpg" alt="靈魂"></div>
 </div>
 <div id="flash"></div>
-<div id="officeUI"><button id="standBtn" type="button" hidden>起身走走</button><div id="walkHint"></div></div>
+<div id="officeUI"><div id="walkHint"></div></div>
+<div id="vignette"></div>
+<div id="hoverTip"></div>
+<div id="mytalk"></div>
+<div id="replies"></div>
+<div id="lightbox"><img alt="梗圖"><button class="lbClose" type="button" aria-label="關閉">×</button></div>
 <div id="talk"></div>
 <div id="title">職場功德所</div>
 <div id="hint">單指拖曳環繞・雙指縮放</div>
-<div id="merit">功德<b id="meritN">0</b></div>
-<button id="voice" type="button">人聲 開</button>
+<div id="merit"><span>功德</span><b id="meritN">0</b></div>
+<button id="voice" class="hud-btn" type="button" aria-label="人聲開關"><svg class="ic-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9.5a4 4 0 0 1 0 5"/><path d="M19.5 7a7.5 7.5 0 0 1 0 10"/></svg><svg class="ic-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M18 9.5l4.5 5M22.5 9.5l-4.5 5"/></svg></button>
+<button id="standBtn" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="4.2" r="2.2"/><path d="M12 7v6"/><path d="M12 13l-3 7M12 13l3 7"/><path d="M8.5 9.5h7"/></svg><span id="standTxt">起身走走</span></button>
 <div id="knock">
   <div class="knock-top"><span>木魚</span><b><span id="knockN">0</span> / 30</b></div>
   <div class="knock-track"><div id="knockBar"></div></div>
@@ -57,6 +63,10 @@
   <button id="endAgain" type="button">再寄放一次</button>
 </div>
 <div id="bubble"><span class="who">小師父</span><span id="say"></span></div>
+<div id="ktv" aria-hidden="true"><img id="ktvBg" alt=""><div id="ktvGlass"></div>
+  <div id="ktvHead"><span class="kw">KARAOKE</span><span class="kt"></span><span class="kc"></span></div>
+  <div id="ktvSub"><span class="l1"><span class="on"></span><span class="off"></span></span><span class="l2"></span></div>
+</div>
 <form id="ask" autocomplete="off">
   <textarea id="q" rows="1" placeholder="說說今天的職場苦水⋯⋯" maxlength="300"></textarea>
   <button id="send" type="submit" disabled>上香</button>

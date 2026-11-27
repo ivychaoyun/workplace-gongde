@@ -402,7 +402,7 @@ function stopSutra(final = true) {
 }
 
 const voiceBtn = document.getElementById('voice');
-function drawVoiceBtn() { voiceBtn.textContent = voice.on ? '人聲 開' : '人聲 關'; voiceBtn.classList.toggle('off', !voice.on); }
+function drawVoiceBtn() { voiceBtn.classList.toggle('off', !voice.on); voiceBtn.setAttribute('aria-label', voice.on ? '人聲 開' : '人聲 關'); }
 voiceBtn.addEventListener('click', () => {
   voice.on = !voice.on; drawVoiceBtn();
   if (!voice.on && synth) synth.cancel();
